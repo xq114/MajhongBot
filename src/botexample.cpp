@@ -14,13 +14,10 @@
 #else
 #ifdef __linux__
 #include <jsoncpp/json/json.h>
-#endif
-#ifdef __WIN32
+#else
 #include <json/json.h>
 #endif
 #endif
-
-#include "../utils/MahjongGB/fan_calculator.h"
 
 #define SIMPLEIO 0
 //由玩家自己定义，0表示JSON交互，1表示简单交互。
@@ -96,6 +93,8 @@ int main() {
         }
         response.push_back(sout.str());
     }
+
+
 
 #if SIMPLEIO
     cout << response[turnID] << endl;

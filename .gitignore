@@ -27,9 +27,12 @@
 *.lib
 
 # Executables
-*.exe
+src/*.exe
+build/*
 *.out
 *.app
 
 # vscode settings
 .vscode
+
+data
