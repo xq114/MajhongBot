@@ -63,7 +63,8 @@ int main() {
         sin >> itmp >> myPlayerID >> quan;
         sin.clear();
         sin.str(request[1]);
-        for (int j = 0; j < 5; j++) sin >> itmp;
+        for (int j = 0; j < 5; j++)
+            sin >> itmp;
         for (int j = 0; j < 13; j++) {
             sin >> stmp;
             hand.push_back(stmp);
@@ -93,8 +94,6 @@ int main() {
         }
         response.push_back(sout.str());
     }
-
-
 
 #if SIMPLEIO
     cout << response[turnID] << endl;

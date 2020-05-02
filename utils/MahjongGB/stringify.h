@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  Copyright (c) 2016-2020 Jeff Wang <summer_insects@163.com>
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,17 +29,12 @@ namespace mahjong {
 
 /**
  * @brief 字符串格式：
- * - 数牌：万=m 条=s
- * 饼=p。后缀使用小写字母，一连串同花色的数牌可合并使用用一个后缀，如123m、678s等等。
- * -
- * 字牌：东南西北=ESWN，中发白=CFP。使用大写字母。亦兼容天凤风格的后缀z，但按中国习惯顺序567z为中发白。
+ * - 数牌：万=m 条=s 饼=p。后缀使用小写字母，一连串同花色的数牌可合并使用用一个后缀，如123m、678s等等。
+ * - 字牌：东南西北=ESWN，中发白=CFP。使用大写字母。亦兼容天凤风格的后缀z，但按中国习惯顺序567z为中发白。
  * - 吃、碰、杠用英文[]，可选用逗号+数字表示供牌来源。数字的具体规则如下：
- *    -
- * 吃：表示第几张牌是由上家打出，如[567m,2]表示57万吃6万（第2张）。对于不指定数字的，默认为吃第1张。
- *    -
- * 碰：表示由哪家打出，1为上家，2为对家，3为下家，如[999s,3]表示碰下家的9条。对于不指定数字的，默认为碰上家。
- *    -
- * 杠：与碰类似，但对于不指定数字的，则认为是暗杠。例如：[SSSS]表示暗杠南；[8888p,1]表示大明杠上家的8饼。当数字为5、6、7时，表示加杠。例如：[1111s,6]表示碰对家的1条后，又摸到1条加杠。
+ *    - 吃：表示第几张牌是由上家打出，如[567m,2]表示57万吃6万（第2张）。对于不指定数字的，默认为吃第1张。
+ *    - 碰：表示由哪家打出，1为上家，2为对家，3为下家，如[999s,3]表示碰下家的9条。对于不指定数字的，默认为碰上家。
+ *    - 杠：与碰类似，但对于不指定数字的，则认为是暗杠。例如：[SSSS]表示暗杠南；[8888p,1]表示大明杠上家的8饼。当数字为5、6、7时，表示加杠。例如：[1111s,6]表示碰对家的1条后，又摸到1条加杠。
  * - 范例
  *    - [EEEE][CCCC][FFFF][PPPP]NN
  *    - 1112345678999s9s
@@ -59,20 +54,18 @@ namespace mahjong {
  * @{
  *  解析牌的错误码
  */
-#define PARSE_NO_ERROR 0                      ///< 无错误
-#define PARSE_ERROR_ILLEGAL_CHARACTER -1      ///< 非法字符
-#define PARSE_ERROR_NO_SUFFIX_AFTER_DIGIT -2  ///< 数字后面缺少后缀
-#define PARSE_ERROR_WRONG_TILES_COUNT_FOR_FIXED_PACK \
-    -3  ///< 副露包含错误的牌数目
-#define PARSE_ERROR_CANNOT_MAKE_FIXED_PACK -4  ///< 无法正确解析副露
-#define PARSE_ERROR_TOO_MANY_FIXED_PACKS \
-    -5  ///< 过多组副露（一副合法手牌最多4副露）
-#define PARSE_ERROR_TOO_MANY_TILES -6             ///< 过多牌
-#define PARSE_ERROR_TILE_COUNT_GREATER_THAN_4 -7  ///< 某张牌出现超过4枚
+#define PARSE_NO_ERROR 0                                ///< 无错误
+#define PARSE_ERROR_ILLEGAL_CHARACTER -1                ///< 非法字符
+#define PARSE_ERROR_NO_SUFFIX_AFTER_DIGIT -2            ///< 数字后面缺少后缀
+#define PARSE_ERROR_WRONG_TILES_COUNT_FOR_FIXED_PACK -3 ///< 副露包含错误的牌数目
+#define PARSE_ERROR_CANNOT_MAKE_FIXED_PACK -4           ///< 无法正确解析副露
+#define PARSE_ERROR_TOO_MANY_FIXED_PACKS -5             ///< 过多组副露（一副合法手牌最多4副露）
+#define PARSE_ERROR_TOO_MANY_TILES -6                   ///< 过多牌
+#define PARSE_ERROR_TILE_COUNT_GREATER_THAN_4 -7        ///< 某张牌出现超过4枚
 
-/**
- * @}
- */
+ /**
+  * @}
+  */
 
 /**
  * @brief 解析牌
@@ -98,8 +91,7 @@ intptr_t parse_tiles(const char *str, tile_t *tiles, intptr_t max_cnt);
  * @retval PARSE_ERROR_TOO_MANY_TILES 过多牌
  * @retval PARSE_ERROR_TILE_COUNT_GREATER_THAN_4 某张牌出现超过4枚
  */
-intptr_t string_to_tiles(const char *str, hand_tiles_t *hand_tiles,
-                         tile_t *serving_tile);
+intptr_t string_to_tiles(const char *str, hand_tiles_t *hand_tiles, tile_t *serving_tile);
 
 /**
  * @brief 牌转换为字符串
@@ -109,8 +101,7 @@ intptr_t string_to_tiles(const char *str, hand_tiles_t *hand_tiles,
  * @param [in] max_size 字符串最大长度
  * @return intptr_t 写入的字符串数
  */
-intptr_t tiles_to_string(const tile_t *tiles, intptr_t tile_cnt, char *str,
-                         intptr_t max_size);
+intptr_t tiles_to_string(const tile_t *tiles, intptr_t tile_cnt, char *str, intptr_t max_size);
 
 /**
  * @brief 牌组转换为字符串
@@ -120,8 +111,7 @@ intptr_t tiles_to_string(const tile_t *tiles, intptr_t tile_cnt, char *str,
  * @param [in] max_size 字符串最大长度
  * @return intptr_t 写入的字符串数
  */
-intptr_t packs_to_string(const pack_t *packs, intptr_t pack_cnt, char *str,
-                         intptr_t max_size);
+intptr_t packs_to_string(const pack_t *packs, intptr_t pack_cnt, char *str, intptr_t max_size);
 
 /**
  * @brief 手牌结构转换为字符串
@@ -130,14 +120,13 @@ intptr_t packs_to_string(const pack_t *packs, intptr_t pack_cnt, char *str,
  * @param [in] max_size 字符串最大长度
  * @return intptr_t 写入的字符串数
  */
-intptr_t hand_tiles_to_string(const hand_tiles_t *hand_tiles, char *str,
-                              intptr_t max_size);
+intptr_t hand_tiles_to_string(const hand_tiles_t *hand_tiles, char *str, intptr_t max_size);
 
 /**
  * end group
  * @}
  */
 
-}  // namespace mahjong
+}
 
 #endif
