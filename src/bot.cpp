@@ -1,15 +1,3 @@
-//
-//  main.cpp
-//  mahjong
-//
-//  Created by Xinyi Li on 4/16/20.
-//  Copyright © 2020 Xinyi Li. All rights reserved.
-//
-// 国标麻将（Chinese Standard Mahjong）样例程序
-// 随机策略
-// 作者：ybh1998
-// 游戏信息：http://www.botzone.org/games#Chinese-Standard-Mahjong
-
 #include "../utils/MahjongGBCPP/MahjongGB.cpp"
 #include <algorithm>
 #include <iostream>
@@ -487,7 +475,12 @@ int main() {
     Json::Value outputJSON;
     outputJSON["response"] = resp;
     outputJSON["data"] = info.saveInfo();
-    cout << outputJSON << endl;
+    Json::StreamWriterBuilder builder;
+    // 调整json为单行输出模式
+    builder["indentation"] = ""; // 注释掉本行以得到复杂输出
+    Json::StreamWriter *writer{builder.newStreamWriter()};
+    writer->write(outputJSON, &cout);
+    cout << endl;
 #endif
     return 0;
 }
