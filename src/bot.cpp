@@ -10,13 +10,12 @@
 // 作者：ybh1998
 // 游戏信息：http://www.botzone.org/games#Chinese-Standard-Mahjong
 
+#include "../utils/MahjongGBCPP/MahjongGB.cpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "../utils/MahjongGBCPP/MahjongGB.h"
 
 #ifdef _BOTZONE_ONLINE
 #include "jsoncpp/json.h"
@@ -35,7 +34,7 @@ using namespace std;
 vector<string> request, response;
 
 int tile_str2num(string s) {
-    // 把string表示的手牌转化为存储数字
+    //    把string表示的手牌转化为存储数字
     if (s[0] == 'W')
         return s[1] - '1';
     if (s[0] == 'B')
@@ -49,7 +48,7 @@ int tile_str2num(string s) {
     return 34;
 }
 string tile_num2str(int n) {
-    // 把int表示的手牌转化为str
+    //    把int表示的手牌转化为str
     int a = n / 9, b = n % 9;
     char c[3];
     c[1] = b + '1';
@@ -69,17 +68,18 @@ string tile_num2str(int n) {
 }
 
 struct info {
+
     int myPlayerID; //即门风
     int quan;
-    int hua[4];   // 玩家花牌数
-    int hand[34]; // hand存储的顺序: W1-9, B1-9, T1-9, F1-4, J1-3
+    int hua[4];         // 玩家花牌数
+    int hand[34] = {0}; // hand存储的顺序: W1-9, B1-9, T1-9, F1-4, J1-3
 
     // 记录所有玩家碰杠吃的情况
-    int peng[4][34];        // 记录的是喂牌的player id
-    int gang[4][34];        // 不包括暗杠
-    int angang[34];         // 只记录了自己的暗杠
-    int angang_;            // 记录自己打算杠的牌
-    vector<int> chi[4][34]; // 表示吃了第几张牌
+    int peng[4][34];             // 记录的是喂牌的player id
+    int gang[4][34];             // 不包括暗杠
+    int angang[34];              //只记录了自己的暗杠
+    int angang_;                 //记录自己打算杠的牌
+    vector<int> chi[4][34] = {}; //表示吃了第几张牌
 
     int play[4][34]; // 记录玩家打出过的牌
 
@@ -134,6 +134,7 @@ struct info {
 
     int canHu(int winTile, bool isZIMO, bool isGANG) {
         // return 胡牌番数，不能胡return0
+        void MahjongInit();
         vector<pair<int, string>> h =
             MahjongFanCalculator(pack(), hand_num2str(), tile_num2str(winTile),
                                  hua[myPlayerID], isZIMO, isJUEZHANG(winTile),
@@ -161,12 +162,11 @@ struct info {
     vector<pair<string, pair<string, int>>> pack() {
         //把吃碰杠的情况转化为算番需要的形式
         int itmp;
-        vector<int> vtmp;
         vector<pair<string, pair<string, int>>> pack;
         for (int i = 0; i < 34; ++i) {
-            vtmp = chi[myPlayerID][i];
-            if (!vtmp.empty()) {
-                for (auto j = vtmp.begin(); j != vtmp.end(); ++j)
+            if (!chi[myPlayerID][i].empty()) {
+                for (auto j = chi[myPlayerID][i].begin();
+                     j != chi[myPlayerID][i].end(); ++j)
                     pack.push_back(mp("CHI", mp(tile_num2str(i), *j)));
             }
             itmp = peng[myPlayerID][i];
@@ -198,12 +198,12 @@ struct info {
     }
 
     void loadInfo(Json::Value root) {
-        myPlayerID = root.get("myPlayerID").asInt();
-        quan = root.get("quan").asInt();
-        angang_ = root.get("angang_").asInt();
-        lastCard = root.get("lastCard").asInt();
-        lastPlayer = root.get("lastPlayer").asInt();
-        leftTile = root.get("leftTile").asInt();
+        myPlayerID = root.get("myPlayerID", 0).asInt();
+        quan = root.get("quan", 0).asInt();
+        angang_ = root.get("angang_", 0).asInt();
+        lastCard = root.get("lastCard", 0).asInt();
+        lastPlayer = root.get("lastPlayer", 0).asInt();
+        leftTile = root.get("leftTile", 0).asInt();
 
         Json::Value tmp = root["hua"];
         for (int i = 0; i < 4; ++i)
@@ -225,14 +225,13 @@ struct info {
         }
         tmp = root["angang"];
         for (int i = 0; i < 34; ++i)
-            angang[i][j] = tmp[i][j].asInt();
+            angang[i] = tmp[i].asInt();
         tmp = root["chi"];
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 34; ++j) {
                 vector<int> vtmp;
-                for (int k = 0; k < tmp[i][j].size(); ++k)
-                    vtmp.push_back(tmp[i][j][k].asInt();) chi[i][j] =
-                        tmp[i][j].asInt();
+                for (int k = 0; k < (int)tmp[i][j].size(); ++k)
+                    chi[i][j].push_back(tmp[i][j][k].asInt());
             }
         }
         tmp = root["play"];
@@ -243,7 +242,72 @@ struct info {
         }
     }
 
-    Json::Value saveInfo() { Json::Value root; }
+    Json::Value saveInfo() {
+        Json::Value root;
+        root["myPlayerID"] = myPlayerID;
+        root["quan"] = quan;
+        root["angang_"] = angang_;
+        root["lastCard"] = lastCard;
+        root["lastPlayer"] = lastPlayer;
+        root["leftTile"] = leftTile;
+
+        Json::Value vtmp(Json::arrayValue);
+        for (int i = 0; i < 4; ++i)
+            vtmp.append(Json::Value(hua[i]));
+        root["hua"] = vtmp;
+
+        vtmp.clear();
+        for (int i = 0; i < 34; ++i)
+            vtmp.append(Json::Value(hand[i]));
+        root["hand"] = vtmp;
+
+        vtmp.clear();
+        for (int i = 0; i < 34; ++i)
+            vtmp.append(Json::Value(angang[i]));
+        root["angang"] = vtmp;
+
+        Json::Value vvtmp(Json::arrayValue);
+        for (int i = 0; i < 4; ++i) {
+            vtmp.clear();
+            for (int j = 0; j < 34; ++j)
+                vtmp.append(Json::Value(peng[i][j]));
+            vvtmp.append(vtmp);
+        }
+        root["peng"] = vvtmp;
+
+        vvtmp.clear();
+        for (int i = 0; i < 4; ++i) {
+            vtmp.clear();
+            for (int j = 0; j < 34; ++j)
+                vtmp.append(Json::Value(gang[i][j]));
+            vvtmp.append(vtmp);
+        }
+        root["gang"] = vvtmp;
+
+        vvtmp.clear();
+        for (int i = 0; i < 4; ++i) {
+            vtmp.clear();
+            for (int j = 0; j < 34; ++j)
+                vtmp.append(Json::Value(play[i][j]));
+            vvtmp.append(vtmp);
+        }
+        root["play"] = vvtmp;
+
+        Json::Value vvvtmp(Json::arrayValue);
+        for (int i = 0; i < 4; ++i) {
+            vvtmp.clear();
+            for (int j = 0; j < 34; ++j) {
+                vtmp.clear();
+                for (int k = 0; k < (int)chi[i][j].size(); ++k)
+                    vtmp.append(Json::Value(chi[i][j][k]));
+                vvtmp[i][j] = vtmp;
+            }
+            vvvtmp.append(vvtmp);
+        }
+        root["chi"] = vvvtmp;
+
+        return root;
+    }
 
 } info;
 
@@ -252,7 +316,6 @@ int main() {
     string stmp;
     string req;  // current request
     string resp; // current response
-    int cg;      //杠的牌
 #if SIMPLEIO
     cin >> turnID;
     turnID--;
@@ -270,14 +333,11 @@ int main() {
     Json::Value inputJSON;
     cin >> inputJSON;
     turnID = inputJSON["responses"].size();
-    //    for(int i = 0; i < turnID; i++) {
-    //        request.push_back(inputJSON["requests"][i].asString());
-    //        response.push_back(inputJSON["responses"][i].asString());
-    //    }
-    //    request.push_back(inputJSON["requests"][turnID].asString());
     req = inputJSON["requests"][turnID].asString();
+    if (turnID > 0)
+        info.loadInfo(inputJSON["data"]);
 #endif
-    int itmp, myPlayerID, quan;
+    int itmp;
     ostringstream sout;
     istringstream sin;
     sin.str(req);
@@ -311,7 +371,7 @@ int main() {
                 resp = "GANG " + stmp;
             }
             //补杠
-            else if (info.peng[myPlayerID][tile])
+            else if (info.peng[info.myPlayerID][tile])
                 resp = "BUGANG " + stmp;
             //出牌//出最大的一张qaaaq
             else {
@@ -426,7 +486,7 @@ int main() {
 #else
     Json::Value outputJSON;
     outputJSON["response"] = resp;
-    outputJSON["data"] = info;
+    outputJSON["data"] = info.saveInfo();
     cout << outputJSON << endl;
 #endif
     return 0;
