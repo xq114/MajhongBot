@@ -13,12 +13,13 @@ SOURCES = bot.cpp
 OBJECTS = bot.o
 TARGETDIR = ../build
 STARGET = $(TARGETDIR)/fbot.cpp
-ETARGET = $(TARGETDIR)/fbot
+RTARGET = $(TARGETDIR)/fbot
+ETARGET = bot
 JUDGESOURCE = ../utils/judge/main.cpp
-JUDGE = ../utils/judge/main
+JUDGE = ./ju
 RM = rm
 
-.PHONY: all default clean amal judge
+.PHONY: all default clean amal judge release
 
 all: default
 
@@ -26,10 +27,15 @@ judge: $(JUDGE)
 
 default: $(ETARGET)
 
+release: $(RTARGET)
+
+$(ETARGET): $(SOURCES)
+	$(CXX) $(CXXFLAGS) -g $< -o $@ $(LDLIBRARY)
+
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(ETARGET): $(OBJECTS)
+$(RTARGET): $(OBJECTS)
 	mkdir -p $(TARGETDIR)
 	$(CXX) $(OBJECTS) $(LDLIBRARY) -o $@
 

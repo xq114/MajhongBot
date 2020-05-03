@@ -27,12 +27,11 @@
 *.lib
 
 # Executables
-src/*.exe
-build/*
+build
+*.exe
 *.out
 *.app
 
 # vscode settings
 .vscode
-
-data
+.DS_Store

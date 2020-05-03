@@ -1,5 +1,3 @@
-//#include "../utils/MahjongGBCPP/MahjongGB.cpp"
-#include "MahjongGB/MahjongGB.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -7,8 +5,10 @@
 #include <vector>
 
 #ifdef _BOTZONE_ONLINE
+#include "MahjongGB/MahjongGB.h"
 #include "jsoncpp/json.h"
 #else
+#include "../utils/MahjongGBCPP/MahjongGB.cpp"
 #include <json/json.h>
 #endif
 
@@ -57,7 +57,6 @@ string tile_num2str(int n) {
 }
 
 struct info {
-
     int myPlayerID = 0; //即门风
     int quan = 0;
     int hua[4] = {0};   // 玩家花牌数
@@ -123,7 +122,6 @@ struct info {
 
     int canHu(int winTile, bool isZIMO, bool isGANG) {
         // return 胡牌番数，不能胡return0
-        void MahjongInit();
         vector<pair<int, string>> h =
             MahjongFanCalculator(pack(), hand_num2str(), tile_num2str(winTile),
                                  hua[myPlayerID], isZIMO, isJUEZHANG(winTile),
@@ -187,7 +185,6 @@ struct info {
     }
 
     void loadInfo(string data) {
-
         int tmp;
         istringstream sin(data);
         sin >> myPlayerID >> quan >> angang_ >> lastCard >> lastPlayer >>
@@ -258,7 +255,6 @@ struct info {
         }
         return sout.str();
     }
-
 } info;
 
 int main() {
@@ -284,12 +280,13 @@ int main() {
     cin >> inputJSON;
     turnID = inputJSON["responses"].size();
     req = inputJSON["requests"][turnID].asString();
-    if (turnID > 0)
+    if (turnID > 0 && inputJSON["data"])
         info.loadInfo(inputJSON["data"].asString());
 #endif
     int itmp;
     ostringstream sout;
     istringstream sin;
+    MahjongInit();
     sin.str(req);
     sin >> itmp;
     if (itmp == 0) {
@@ -435,8 +432,9 @@ int main() {
     cout << resp << endl;
 #else
     Json::Value outputJSON;
+    outputJSON["data"] = info.saveInfo();
+    outputJSON["debug"] = outputJSON["data"];
     outputJSON["response"] = resp;
-    outputJSON["data"] = Json::Value(info.saveInfo());
     Json::StreamWriterBuilder builder;
     // 调整json为单行输出模式
     builder["indentation"] = ""; // 注释掉本行以得到复杂输出
