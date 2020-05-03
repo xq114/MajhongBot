@@ -1,4 +1,5 @@
-#include "../utils/MahjongGBCPP/MahjongGB.cpp"
+//#include "../utils/MahjongGBCPP/MahjongGB.cpp"
+#include "MahjongGB/MahjongGB.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -57,24 +58,24 @@ string tile_num2str(int n) {
 
 struct info {
 
-    int myPlayerID; //即门风
-    int quan;
-    int hua[4];         // 玩家花牌数
+    int myPlayerID = 0; //即门风
+    int quan = 0;
+    int hua[4] = {0};   // 玩家花牌数
     int hand[34] = {0}; // hand存储的顺序: W1-9, B1-9, T1-9, F1-4, J1-3
 
     // 记录所有玩家碰杠吃的情况
-    int peng[4][34];             // 记录的是喂牌的player id
-    int gang[4][34];             // 不包括暗杠
-    int angang[34];              //只记录了自己的暗杠
-    int angang_;                 //记录自己打算杠的牌
+    int peng[4][34] = {0};       // 记录的是喂牌的player id
+    int gang[4][34] = {0};       // 不包括暗杠
+    int angang[34] = {0};        //只记录了自己的暗杠
+    int angang_ = 0;             //记录自己打算杠的牌
     vector<int> chi[4][34] = {}; //表示吃了第几张牌
 
-    int play[4][34]; // 记录玩家打出过的牌
+    int play[4][34] = {0}; // 记录玩家打出过的牌
 
-    int lastCard;   // 上一局桌上的牌，如果是摸牌则为34
-    int lastPlayer; // 上一局桌上的牌是谁打的
+    int lastCard = 0;   // 上一局桌上的牌，如果是摸牌则为34
+    int lastPlayer = 0; // 上一局桌上的牌是谁打的
 
-    int leftTile; //桌上还有多少牌
+    int leftTile = 144; //桌上还有多少牌
 
     int canAnGang() {
         // return一个可以杠的牌，没有的话return34
@@ -185,116 +186,77 @@ struct info {
         return 0;
     }
 
-    void loadInfo(Json::Value root) {
-        myPlayerID = root.get("myPlayerID", 0).asInt();
-        quan = root.get("quan", 0).asInt();
-        angang_ = root.get("angang_", 0).asInt();
-        lastCard = root.get("lastCard", 0).asInt();
-        lastPlayer = root.get("lastPlayer", 0).asInt();
-        leftTile = root.get("leftTile", 0).asInt();
+    void loadInfo(string data) {
 
-        Json::Value tmp = root["hua"];
+        int tmp;
+        istringstream sin(data);
+        sin >> myPlayerID >> quan >> angang_ >> lastCard >> lastPlayer >>
+            leftTile;
         for (int i = 0; i < 4; ++i)
-            hua[i] = tmp[i].asInt();
-        tmp = root["hand"];
+            sin >> hua[i];
         for (int i = 0; i < 34; ++i)
-            hand[i] = tmp[i].asInt();
-        tmp = root["peng"];
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 34; ++j) {
-                peng[i][j] = tmp[i][j].asInt();
-            }
-        }
-        tmp = root["gang"];
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 34; ++j) {
-                gang[i][j] = tmp[i][j].asInt();
-            }
-        }
-        tmp = root["angang"];
+            sin >> hand[i];
         for (int i = 0; i < 34; ++i)
-            angang[i] = tmp[i].asInt();
-        tmp = root["chi"];
+            sin >> angang[i];
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 34; ++j) {
-                vector<int> vtmp;
-                for (int k = 0; k < (int)tmp[i][j].size(); ++k)
-                    chi[i][j].push_back(tmp[i][j][k].asInt());
+                sin >> peng[i][j];
             }
         }
-        tmp = root["play"];
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 34; ++j) {
-                play[i][j] = tmp[i][j].asInt();
+                sin >> gang[i][j];
+            }
+        }
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 34; ++j) {
+                sin >> play[i][j];
+            }
+        }
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 34; ++j) {
+                sin >> tmp;
+                while (tmp != 5) {
+                    chi[i][j].push_back(tmp);
+                    sin >> tmp;
+                }
             }
         }
     }
 
-    Json::Value saveInfo() {
-        Json::Value root;
-        root["myPlayerID"] = myPlayerID;
-        root["quan"] = quan;
-        root["angang_"] = angang_;
-        root["lastCard"] = lastCard;
-        root["lastPlayer"] = lastPlayer;
-        root["leftTile"] = leftTile;
-
-        Json::Value vtmp(Json::arrayValue);
+    string saveInfo() {
+        ostringstream sout;
+        sout << myPlayerID << " " << quan << " " << angang_ << " " << lastCard
+             << " " << lastPlayer << " " << leftTile << " ";
         for (int i = 0; i < 4; ++i)
-            vtmp.append(Json::Value(hua[i]));
-        root["hua"] = vtmp;
-
-        vtmp.clear();
+            sout << hua[i] << " ";
         for (int i = 0; i < 34; ++i)
-            vtmp.append(Json::Value(hand[i]));
-        root["hand"] = vtmp;
-
-        vtmp.clear();
+            sout << hand[i] << " ";
         for (int i = 0; i < 34; ++i)
-            vtmp.append(Json::Value(angang[i]));
-        root["angang"] = vtmp;
-
-        Json::Value vvtmp(Json::arrayValue);
+            sout << angang[i] << " ";
         for (int i = 0; i < 4; ++i) {
-            vtmp.clear();
-            for (int j = 0; j < 34; ++j)
-                vtmp.append(Json::Value(peng[i][j]));
-            vvtmp.append(vtmp);
-        }
-        root["peng"] = vvtmp;
-
-        vvtmp.clear();
-        for (int i = 0; i < 4; ++i) {
-            vtmp.clear();
-            for (int j = 0; j < 34; ++j)
-                vtmp.append(Json::Value(gang[i][j]));
-            vvtmp.append(vtmp);
-        }
-        root["gang"] = vvtmp;
-
-        vvtmp.clear();
-        for (int i = 0; i < 4; ++i) {
-            vtmp.clear();
-            for (int j = 0; j < 34; ++j)
-                vtmp.append(Json::Value(play[i][j]));
-            vvtmp.append(vtmp);
-        }
-        root["play"] = vvtmp;
-
-        Json::Value vvvtmp(Json::arrayValue);
-        for (int i = 0; i < 4; ++i) {
-            vvtmp.clear();
             for (int j = 0; j < 34; ++j) {
-                vtmp.clear();
-                for (int k = 0; k < (int)chi[i][j].size(); ++k)
-                    vtmp.append(Json::Value(chi[i][j][k]));
-                vvtmp[i][j] = vtmp;
+                sout << peng[i][j] << " ";
             }
-            vvvtmp.append(vvtmp);
         }
-        root["chi"] = vvvtmp;
-
-        return root;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 34; ++j) {
+                sout << gang[i][j] << " ";
+            }
+        }
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 34; ++j) {
+                sout << play[i][j] << " ";
+            }
+        }
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 34; ++j) {
+                for (auto k = chi[i][j].begin(); k < chi[i][j].end(); ++k)
+                    sout << *k << " ";
+                sout << 5 << " ";
+            }
+        }
+        return sout.str();
     }
 
 } info;
@@ -323,7 +285,7 @@ int main() {
     turnID = inputJSON["responses"].size();
     req = inputJSON["requests"][turnID].asString();
     if (turnID > 0)
-        info.loadInfo(inputJSON["data"]);
+        info.loadInfo(inputJSON["data"].asString());
 #endif
     int itmp;
     ostringstream sout;
@@ -474,7 +436,7 @@ int main() {
 #else
     Json::Value outputJSON;
     outputJSON["response"] = resp;
-    outputJSON["data"] = info.saveInfo();
+    outputJSON["data"] = Json::Value(info.saveInfo());
     Json::StreamWriterBuilder builder;
     // 调整json为单行输出模式
     builder["indentation"] = ""; // 注释掉本行以得到复杂输出
