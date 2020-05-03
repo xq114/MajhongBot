@@ -85,23 +85,26 @@ struct info {
         return 34;
     }
 
-    bool canMingGang(int tile) {
+    bool canMingGang(int tile, int playerID) {
         // return是否可杠
+        if (playerID==myPlayerID) return 0;
         if (hand[tile] == 3)
             return 1;
         return 0;
     }
 
-    bool canPeng(int tile) {
+    bool canPeng(int tile, int playerID) {
         // return是否可碰
+        if (playerID==myPlayerID) return 0;
         if (hand[tile] == 2)
             return 1;
         return 0;
     }
 
-    vector<int> canChi(int tile) {
+    vector<int> canChi(int tile, int playerID) {
         // return吃的中间牌，不能吃return空vector
         vector<int> v;
+        if (id2jia(playerID)!=1) return v;
         if (tile < 27) {
             int k = tile % 9;
             if (k != 7 && k != 8) {
@@ -309,25 +312,28 @@ int main() {
         int tile = tile_str2num(stmp);
         ++info.hand[tile];
         //杠
-        if (info.canHu(tile, 1, 0))
-            resp = "HU";
-        else {
-            itmp = info.canAnGang();
-            if (itmp != 34) {
-                info.angang_ = itmp;
-                resp = "GANG " + stmp;
-            }
-            //补杠
-            else if (info.peng[info.myPlayerID][tile])
-                resp = "BUGANG " + stmp;
-            //出牌//出最大的一张qaaaq
-            else {
+//        if (info.canHu(tile, 1, 0))
+//            resp = "HU";
+//        else {
+//
+//            itmp = info.canAnGang();
+//            if (itmp != 34) {
+//                info.angang_ = itmp;
+//                resp = "GANG " + stmp;
+//            }
+//            //补杠
+//            else if (info.peng[info.myPlayerID][tile])
+//                resp = "BUGANG " + stmp;
+//            //出牌//出最大的一张qaaaq
+//            else {
                 for (int i = 33; i >= 0; --i) {
-                    if (info.hand[i] != 0)
+                    if (info.hand[i] != 0){
                         resp = "PLAY " + tile_num2str(i);
+                        break;
+                    }
                 }
-            }
-        }
+//            }
+//        }
     } else {
         sin >> itmp >> stmp;
         int t;
@@ -349,22 +355,26 @@ int main() {
             info.lastCard = t;
             info.lastPlayer = itmp;
             // 是否要碰吃杠//胡还没写qaaq
-            if (info.canMingGang(t))
+            if (info.canMingGang(t,itmp))
                 resp = "GANG";
-            else if (info.canPeng(t)) {
+            else if (info.canPeng(t,itmp)) {
                 resp = "PENG ";
                 for (int i = 33; i >= 0; --i) {
-                    if (i != t && info.hand[i] != 0)
+                    if (i != t && info.hand[i] != 0){
                         resp += tile_num2str(i);
+                        break;
+                    }
                 }
             } else {
-                vector<int> v = info.canChi(t);
+                vector<int> v = info.canChi(t,itmp);
                 if (!v.empty()) {
-                    resp = "Chi " + tile_num2str(v.front());
+                    resp = "CHI " + tile_num2str(v.front()) + " ";
                     for (int i = 33; i >= 0; --i) {
                         if (i != v.front() && i != v.front() + 1 &&
-                            i != v.front() - 1 && info.hand[i] != 0)
+                            i != v.front() - 1 && info.hand[i] != 0){
                             resp += tile_num2str(i);
+                            break;
+                        }
                     }
 
                 } else {
