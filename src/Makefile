@@ -7,19 +7,25 @@ endif
 CXXFLAGS = -std=c++17
 LINKER = ld
 LDLIBRARY = -ljsoncpp
-AM = ../utils/amalgamate
-AMFLAGS = -i ../utils/MahjongGB -i ../utils/MahjongGBCPP
 SOURCES = bot.cpp
 OBJECTS = bot.o
+ETARGET = bot
+
+AM = ../utils/amalgamate
+AMFLAGS = -i ../utils/MahjongGB -i ../utils/MahjongGBCPP
 TARGETDIR = ../build
 STARGET = $(TARGETDIR)/fbot.cpp
 RTARGET = $(TARGETDIR)/fbot
-ETARGET = bot
+
 JUDGESOURCE = ../utils/judge/main.cpp
 JUDGE = ./ju
+
+TORCHPREFIX = /usr/local/libtorch
+TORCHFLAGS = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include -Wl,-rpath,$(TORCHPREFIX)/lib -Wl,--as-needed $(TORCHPREFIX)/lib/torch_cpu -Wl,--as-needed $(TORCHPREFIX)/lib/c10
+
 RM = rm
 
-.PHONY: all default clean amal judge release
+.PHONY: all default clean amal judge release nn
 
 all: default
 
@@ -28,6 +34,8 @@ judge: $(JUDGE)
 default: $(ETARGET)
 
 release: $(RTARGET)
+
+nn: botnn
 
 $(ETARGET): $(SOURCES)
 	$(CXX) $(CXXFLAGS) -g $< -o $@ $(LDLIBRARY)
@@ -41,6 +49,9 @@ $(RTARGET): $(OBJECTS)
 
 $(JUDGE): $(JUDGESOURCE)
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LDLIBRARY)
+
+botnn: botnn.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@ $(TORCHFLAGS)
 
 amal: $(STARGET)
 

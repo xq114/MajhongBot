@@ -5,12 +5,14 @@
 #include <vector>
 
 #ifdef _BOTZONE_ONLINE
-#include "MahjongGB/MahjongGB.h"
+// #include "MahjongGB/MahjongGB.h"
+// #include "MahjongGB/fan_calculator.cpp"
+// #include "MahjongGB/shanten.cpp"
 #include "jsoncpp/json.h"
 #else
-#include "../utils/MahjongGBCPP/MahjongGB.cpp"
 #include <json/json.h>
 #endif
+#include "../utils/MahjongGBCPP/MahjongGB.cpp"
 
 #define SIMPLEIO 0
 //由玩家自己定义，0表示JSON交互，1表示简单交互。
@@ -23,7 +25,7 @@ using namespace std;
 vector<string> request, response;
 
 int tile_str2num(string s) {
-    //    把string表示的手牌转化为存储数字
+    // 把string表示的手牌转化为存储数字
     if (s[0] == 'W')
         return s[1] - '1';
     if (s[0] == 'B')
@@ -36,10 +38,12 @@ int tile_str2num(string s) {
         return 31 + s[1] - '1';
     return 34;
 }
+
 string tile_num2str(int n) {
-    //    把int表示的手牌转化为str
+    // 把int表示的手牌转化为str
     int a = n / 9, b = n % 9;
     char c[3];
+    c[2] = '\0';
     c[1] = b + '1';
     if (a == 0)
         c[0] = 'W';
@@ -204,24 +208,42 @@ struct info {
     }
 
     int canHu(int winTile, bool isZIMO, bool isGANG) {
-        // isGANG:关于杠，复合点和时为枪杠和，复合自摸则为杠上开花
-        // return 胡牌番数，不能胡return0
-        vector<pair<int, string>> h = MahjongFanCalculator(
-            pack(), hand_num2str(winTile), tile_num2str(winTile),
-            hua[myPlayerID], isZIMO, isJUEZHANG(winTile), isGANG, leftTile == 0,
-            myPlayerID, quan);
-        int totalFan = 0;
-        for (auto i = h.begin(); i != h.end(); ++i) {
-            totalFan += i->fr;
+        // isGANG:关于杠，复合点和时为枪杠和
+        vector<string> hand_str = hand_num2str();
+        mahjong::tile_t standing_tiles[13];
+        int cnt = 0;
+        for (string s : hand_str) {
+            standing_tiles[cnt++] = str2tile[s];
         }
-        if (totalFan >= 8)
-            return totalFan;
-        else
+        string wtstr = tile_num2str(winTile);
+        mahjong::tile_t wt = str2tile[wtstr];
+        bool basicfw = mahjong::is_basic_form_win(standing_tiles, cnt, wt);
+        bool sevenpw = mahjong::is_seven_pairs_win(standing_tiles, cnt, wt);
+        bool thirtow =
+            mahjong::is_thirteen_orphans_win(standing_tiles, cnt, wt);
+        bool knittsw =
+            mahjong::is_knitted_straight_win(standing_tiles, cnt, wt);
+        bool honorkw =
+            mahjong::is_honors_and_knitted_tiles_win(standing_tiles, cnt, wt);
+        if (basicfw || sevenpw || thirtow || knittsw || honorkw) {
+            vector<pair<int, string>> h = MahjongFanCalculator(
+                pack(), hand_num2str(), tile_num2str(winTile), hua[myPlayerID],
+                isZIMO, isJUEZHANG(winTile), isGANG, leftTile == 0, myPlayerID,
+                quan);
+            int totalFan = 0;
+            for (auto i = h.begin(); i != h.end(); ++i) {
+                totalFan += i->fr;
+            }
+            if (totalFan >= 8)
+                return totalFan;
+            else
+                return 0;
+        } else
             return 0;
     }
 
     /*算番辅助函数*/
-    vector<string> hand_num2str(int winTile) {
+    vector<string> hand_num2str() {
         //把手牌转成计算番数需要的形式
         vector<string> hand_str;
         for (int i = 0; i < 34; ++i) {
