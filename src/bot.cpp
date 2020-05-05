@@ -312,7 +312,7 @@ struct info {
 
     string decisionTILE(int itmp, int tile) {
         //桌上有一张牌的决策，可能是别人自摸/碰/吃后出的牌
-        //可能的决策：胡，明杠，碰，吃，resp
+        //可能的决策：胡，明杠，碰，吃，pass
         if (canHu(tile, 0, 0))
             return "HU";
 
