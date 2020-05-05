@@ -223,7 +223,6 @@ struct info {
     /*算番辅助函数*/
     vector<string> hand_num2str(int winTile) {
         //把手牌转成计算番数需要的形式
-        --hand[winTile]; //不包括胡的那张
         vector<string> hand_str;
         for (int i = 0; i < 34; ++i) {
             for (int j = 0; j < hand[i]; ++j)
@@ -277,6 +276,7 @@ struct info {
         //可能的操作：胡，暗杠，补杠，出牌
         //如果可以胡一定胡，但是另外三个的选择不确定
 
+        --hand[tile];
         //杠上开花胡牌
         if (bupai) { //上一局是自己杠，这局补摸的胡了
             if (canHu(tile, 0, 1))
@@ -288,6 +288,7 @@ struct info {
         if (canHu(tile, 1, 0))
             return "HU";
 
+        ++hand[tile];
         string resp;
         int itmp;
         itmp = canAnGang();
