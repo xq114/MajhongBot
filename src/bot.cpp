@@ -76,6 +76,83 @@ struct info {
 
     int leftTile = 144; //桌上还有多少牌
 
+    bool bupai = 0; //记录这局的自摸是不是杠后补牌
+
+    /*addxxx都是用来记录req的信息的*/
+    void addZIMO(int tile) {
+        --leftTile;
+        ++hand[tile];
+    }
+
+    void addBUHUA(int itmp) {
+        --leftTile;
+        ++hua[itmp];
+        lastCard = 34;
+    }
+
+    void addDRAW() {
+        --leftTile;
+        lastCard = 34;
+    }
+
+    void addPLAY(int itmp, int tile) {
+        if (itmp == myPlayerID)
+            --hand[tile];
+        ++play[itmp][tile];
+        lastCard = tile;
+        lastPlayer = itmp;
+    }
+
+    void addPENG(int itmp, int tile) {
+        peng[itmp][lastCard] = lastPlayer;
+        if (itmp == myPlayerID) {
+            hand[lastCard] -= 2;
+            --hand[tile];
+        }
+        ++play[itmp][tile];
+        lastCard = tile;
+        lastPlayer = itmp;
+    }
+
+    void addCHI(int itmp, int pos, int tile) {
+        chi[itmp][tile].push_back(pos);
+        if (itmp == myPlayerID) {
+            --hand[tile];
+            for (int i = 1; i <= 3; ++i) {
+                if (i != pos)
+                    --hand[tile + i - 2];
+            }
+        }
+        ++play[itmp][tile];
+        lastCard = tile;
+        lastPlayer = itmp;
+    }
+
+    void addGANG(int itmp) {
+        if (lastCard != 34) { //明杠
+            ++gang[itmp][lastCard];
+            if (itmp == myPlayerID) {
+                hand[lastCard] = 0;
+                bupai = 1;
+            }
+        } else { //暗杠
+            //这里可能还需要补记录其他人的暗杠情况
+            if (itmp == myPlayerID) {
+                hand[angang_] = 0;
+                angang[angang_] = 1;
+                bupai = 1;
+            }
+        }
+    }
+
+    void addBUGANG(int itmp, int tile) {
+        if (itmp == myPlayerID)
+            --hand[tile];
+        gang[itmp][tile] = peng[itmp][tile];
+        peng[itmp][tile] = 0;
+    }
+
+    /*判断是否可以碰吃杠胡的函数*/
     int canAnGang() {
         // return一个可以杠的牌，没有的话return34
         for (int i = 0; i < 34; ++i) {
@@ -87,7 +164,8 @@ struct info {
 
     bool canMingGang(int tile, int playerID) {
         // return是否可杠
-        if (playerID==myPlayerID) return 0;
+        if (playerID == myPlayerID)
+            return 0;
         if (hand[tile] == 3)
             return 1;
         return 0;
@@ -95,7 +173,8 @@ struct info {
 
     bool canPeng(int tile, int playerID) {
         // return是否可碰
-        if (playerID==myPlayerID) return 0;
+        if (playerID == myPlayerID)
+            return 0;
         if (hand[tile] == 2)
             return 1;
         return 0;
@@ -104,7 +183,8 @@ struct info {
     vector<int> canChi(int tile, int playerID) {
         // return吃的中间牌，不能吃return空vector
         vector<int> v;
-        if (id2jia(playerID)!=1) return v;
+        if (id2jia(playerID) != 1)
+            return v;
         if (tile < 27) {
             int k = tile % 9;
             if (k != 7 && k != 8) {
@@ -124,11 +204,12 @@ struct info {
     }
 
     int canHu(int winTile, bool isZIMO, bool isGANG) {
+        // isGANG:关于杠，复合点和时为枪杠和，复合自摸则为杠上开花
         // return 胡牌番数，不能胡return0
-        vector<pair<int, string>> h =
-            MahjongFanCalculator(pack(), hand_num2str(), tile_num2str(winTile),
-                                 hua[myPlayerID], isZIMO, isJUEZHANG(winTile),
-                                 isGANG, leftTile == 0, myPlayerID, quan);
+        vector<pair<int, string>> h = MahjongFanCalculator(
+            pack(), hand_num2str(winTile), tile_num2str(winTile),
+            hua[myPlayerID], isZIMO, isJUEZHANG(winTile), isGANG, leftTile == 0,
+            myPlayerID, quan);
         int totalFan = 0;
         for (auto i = h.begin(); i != h.end(); ++i) {
             totalFan += i->fr;
@@ -139,8 +220,10 @@ struct info {
             return 0;
     }
 
-    vector<string> hand_num2str() {
+    /*算番辅助函数*/
+    vector<string> hand_num2str(int winTile) {
         //把手牌转成计算番数需要的形式
+        --hand[winTile]; //不包括胡的那张
         vector<string> hand_str;
         for (int i = 0; i < 34; ++i) {
             for (int j = 0; j < hand[i]; ++j)
@@ -180,6 +263,7 @@ struct info {
     }
 
     bool isJUEZHANG(int tile) {
+        //是不是桌上最后一张牌
         for (int i = 0; i < 4; ++i) {
             if (peng[i])
                 return 1;
@@ -187,11 +271,97 @@ struct info {
         return 0;
     }
 
+    /*决策函数*/
+    string decisionZIMO(int tile) {
+        //自摸记录后的决策
+        //可能的操作：胡，暗杠，补杠，出牌
+        //如果可以胡一定胡，但是另外三个的选择不确定
+
+        //杠上开花胡牌
+        if (bupai) { //上一局是自己杠，这局补摸的胡了
+            if (canHu(tile, 0, 1))
+                return "HU";
+            bupai = 0;
+        }
+
+        //普通自摸胡牌
+        if (canHu(tile, 1, 0))
+            return "HU";
+
+        string resp;
+        int itmp;
+        itmp = canAnGang();
+        if (itmp != 34) {
+            //在暗杠和出牌里选
+            angang_ = itmp;
+            resp = "GANG " + tile_num2str(tile);
+        } else if (peng[myPlayerID][tile]) {
+            //在补杠和出牌里选
+            resp = "BUGANG " + tile_num2str(tile);
+        } else {
+            //出牌策略
+            for (int i = 33; i >= 0; --i) {
+                if (hand[i] != 0) {
+                    resp = "PLAY " + tile_num2str(i);
+                    break;
+                }
+            }
+        }
+        return resp;
+    }
+
+    string decisionTILE(int itmp, int tile) {
+        //桌上有一张牌的决策，可能是别人自摸/碰/吃后出的牌
+        //可能的决策：胡，明杠，碰，吃，resp
+        if (canHu(tile, 0, 0))
+            return "HU";
+
+        string resp;
+        //是否可以明杠
+        if (canMingGang(tile, itmp))
+            resp = "GANG";
+        //是否可以碰
+        if (canPeng(tile, itmp)) {
+            resp = "PENG ";
+            for (int i = 33; i >= 0; --i) {
+                if (i != tile && hand[i] != 0) {
+                    resp += tile_num2str(i);
+                    break;
+                }
+            }
+        }
+        //是否可以吃
+        vector<int> v = canChi(tile, itmp);
+        if (!v.empty()) {
+            resp = "CHI " + tile_num2str(v.front()) + " ";
+            for (int i = 33; i >= 0; --i) {
+                if (i != v.front() && i != v.front() + 1 &&
+                    i != v.front() - 1 && hand[i] != 0) {
+                    resp += tile_num2str(i);
+                    break;
+                }
+            }
+        }
+        //决定是吃碰杠还是pass
+        resp = "PASS";
+
+        return resp;
+    }
+
+    string decisionQIANGGANG(int tile) {
+        //抢杠胡决策
+        if (canHu(tile, 0, 1))
+            return "HU";
+        else
+            return "PASS";
+    }
+
+    /*保存读取数据*/
     void loadInfo(string data) {
         int tmp;
         istringstream sin(data);
         sin >> myPlayerID >> quan >> angang_ >> lastCard >> lastPlayer >>
-            leftTile;
+            leftTile >> bupai;
         for (int i = 0; i < 4; ++i)
             sin >> hua[i];
         for (int i = 0; i < 34; ++i)
@@ -227,7 +397,7 @@ struct info {
     string saveInfo() {
         ostringstream sout;
         sout << myPlayerID << " " << quan << " " << angang_ << " " << lastCard
-             << " " << lastPlayer << " " << leftTile << " ";
+             << " " << lastPlayer << " " << leftTile << " " << bupai << " ";
         for (int i = 0; i < 4; ++i)
             sout << hua[i] << " ";
         for (int i = 0; i < 34; ++i)
@@ -262,7 +432,7 @@ struct info {
 
 int main() {
     int turnID;
-    string stmp;
+    string stmp, stmp2;
     string req;  // current request
     string resp; // current response
 #if SIMPLEIO
@@ -308,133 +478,47 @@ int main() {
         resp = "PASS";
     } else if (itmp == 2) {
         sin >> stmp;
-        --info.leftTile;
         int tile = tile_str2num(stmp);
-        ++info.hand[tile];
-        //杠
-//        if (info.canHu(tile, 1, 0))
-//            resp = "HU";
-//        else {
-//
-//            itmp = info.canAnGang();
-//            if (itmp != 34) {
-//                info.angang_ = itmp;
-//                resp = "GANG " + stmp;
-//            }
-//            //补杠
-//            else if (info.peng[info.myPlayerID][tile])
-//                resp = "BUGANG " + stmp;
-//            //出牌//出最大的一张qaaaq
-//            else {
-                for (int i = 33; i >= 0; --i) {
-                    if (info.hand[i] != 0){
-                        resp = "PLAY " + tile_num2str(i);
-                        break;
-                    }
-                }
-//            }
-//        }
+        info.addZIMO(tile);
+        /*自摸后的决策*/
+        resp = info.decisionZIMO(tile);
+
     } else {
         sin >> itmp >> stmp;
-        int t;
+        int tile;
         if (stmp == "BUHUA") {
-            --info.leftTile;
-            ++info.hua[itmp];
-            info.lastCard = 34;
+            info.addBUHUA(itmp);
             resp = "PASS";
         } else if (stmp == "DRAW") {
-            --info.leftTile;
-            info.lastCard = 34;
+            info.addDRAW();
             resp = "PASS";
         } else if (stmp == "PLAY") {
             sin >> stmp;
-            t = tile_str2num(stmp);
-            if (itmp == info.myPlayerID)
-                --info.hand[t];
-            ++info.play[itmp][t];
-            info.lastCard = t;
-            info.lastPlayer = itmp;
-            // 是否要碰吃杠//胡还没写qaaq
-            if (info.canMingGang(t,itmp))
-                resp = "GANG";
-            else if (info.canPeng(t,itmp)) {
-                resp = "PENG ";
-                for (int i = 33; i >= 0; --i) {
-                    if (i != t && info.hand[i] != 0){
-                        resp += tile_num2str(i);
-                        break;
-                    }
-                }
-            } else {
-                vector<int> v = info.canChi(t,itmp);
-                if (!v.empty()) {
-                    resp = "CHI " + tile_num2str(v.front()) + " ";
-                    for (int i = 33; i >= 0; --i) {
-                        if (i != v.front() && i != v.front() + 1 &&
-                            i != v.front() - 1 && info.hand[i] != 0){
-                            resp += tile_num2str(i);
-                            break;
-                        }
-                    }
-
-                } else {
-                    resp = "PASS";
-                }
-            }
+            tile = tile_str2num(stmp);
+            info.addPLAY(itmp, tile);
+            /*桌上有牌的决策*/
+            resp = info.decisionTILE(itmp, tile);
         } else if (stmp == "PENG") {
-            info.peng[itmp][info.lastCard] = info.lastPlayer;
             sin >> stmp;
-            t = tile_str2num(stmp);
-            if (itmp == info.myPlayerID) {
-                info.hand[info.lastCard] -= 2;
-                --info.hand[t];
-            }
-            ++info.play[itmp][t];
-            info.lastCard = t;
-            info.lastPlayer = itmp;
-            // 是否要碰吃杠胡
-            resp = "PASS";
+            tile = tile_str2num(stmp);
+            info.addPENG(itmp, tile);
+            /*桌上有牌的决策*/
+            resp = info.decisionTILE(itmp, tile);
         } else if (stmp == "CHI") {
-            sin >> stmp;
-            t = tile_str2num(stmp);
-            int p = info.chiPos(t);
-            info.chi[itmp][t].push_back(p);
-            if (itmp == info.myPlayerID) {
-                for (int i = 1; i <= 3; ++i) {
-                    if (i != p)
-                        --info.hand[t + i - 2];
-                }
-            }
-            sin >> stmp;
-            t = tile_str2num(stmp);
-            ++info.play[itmp][t];
-            if (itmp == info.myPlayerID)
-                --info.hand[t];
-            info.lastCard = t;
-            info.lastPlayer = itmp;
-            // 是否要碰吃杠胡
-            resp = "PASS";
+            sin >> stmp >> stmp2;
+            tile = tile_str2num(stmp2);
+            info.addCHI(itmp, info.chiPos(tile_str2num(stmp)), tile);
+            /*桌上有牌的决策*/
+            resp = info.decisionTILE(itmp, tile);
         } else if (stmp == "GANG") {
-            if (info.lastCard != 34) { //明杠
-                ++info.gang[itmp][info.lastCard];
-                if (itmp == info.myPlayerID)
-                    info.hand[info.lastCard] = 0;
-            } else { //暗杠
-                if (itmp == info.myPlayerID) {
-                    info.hand[info.angang_] = 0;
-                    info.angang[info.angang_] = 1;
-                }
-            }
+            info.addGANG(itmp);
             resp = "PASS";
         } else { // stmp=="BUGANG"
             sin >> stmp;
-            t = tile_str2num(stmp);
-            if (itmp == info.myPlayerID)
-                --info.hand[t];
-            info.gang[itmp][t] = info.peng[itmp][t];
-            info.peng[itmp][t] = 0;
-            //抢杠胡
-            resp = "PASS";
+            tile = tile_str2num(stmp);
+            info.addBUGANG(itmp, tile);
+            /*抢杠胡决策*/
+            resp = info.decisionQIANGGANG(tile);
         }
     }
 
