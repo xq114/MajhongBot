@@ -1,5 +1,5 @@
-#include <json/json.h>
-
+#include "../MahjongGB/fan_calculator.cpp"
+#include "../MahjongGB/shanten.h"
 #include <algorithm>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -7,13 +7,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <json/json.h>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include "../MahjongGB/fan_calculator.cpp"
-#include "../MahjongGB/shanten.cpp"
 
 using namespace std;
 
@@ -162,7 +160,7 @@ int checkHu(int player, bool finish) {
                     outputValue["display"]["score"][i] = -(8 + re);
                     outputValue["content"][to_string(i)] = -(8 + re);
                 } else if (roundStage == i + 8 &&
-                           (lastBUGANG || lastANGANG)) {  // 自杠 杠上开花
+                           (lastBUGANG || lastANGANG)) { // 自杠 杠上开花
                     outputValue["display"]["score"][i] = -(8 + re);
                     outputValue["content"][to_string(i)] = -(8 + re);
                 } else {
@@ -411,7 +409,8 @@ void roundOutput(Json::Value &outputValue) {
                 outputString += " " + playerData[i].tile[j];
             }
             for (int j = 0; j < 4; j++) {
-                for (string k : playerData[j].flower) outputString += " " + k;
+                for (string k : playerData[j].flower)
+                    outputString += " " + k;
             }
             outputValue["content"][to_string(i)] = outputString;
         }
@@ -453,6 +452,11 @@ void roundOutput(Json::Value &outputValue) {
                 checkHu(roundStage, false);
         }
     } else if (roundStage >= 4 && roundStage < 8) {
+        if (tileWall.empty() &&
+            (lastOp == "CHI" ||
+             lastOp == "PENG")) { // 当牌墙为空时，不能进行吃碰行为
+            playerError(roundStage % 4, "WA");
+        }
         outputValue["display"]["action"] = lastOp;
         outputValue["display"]["player"] = roundStage % 4;
         outputValue["display"]["tile"] = lastTile;
@@ -472,6 +476,11 @@ void roundOutput(Json::Value &outputValue) {
             outputValue["display"]["canHu"][i] = checkHu(i, false);
         }
     } else {
+        if (tileWall.empty() &&
+            (lastOp == "GANG" ||
+             lastOp == "BUGANG")) { // 当牌墙为空时，不能进行杠行为
+            playerError(roundStage % 4, "WA");
+        }
         string cOp = "GANG";
         if (lastOp != "GANG" && lastBUGANG) {
             cOp = "BUGANG " + lastTile;
@@ -510,10 +519,12 @@ void roundInput(Json::Value &inputValue) {
         currBUGANG = currGANG = currANGANG = false;
     } else if (roundStage >= 4 && roundStage < 8) {
         for (int i = 0; i < 4; i++) {
-            if (roundStage == i + 4) {
-                checkInputPASS(inputValue[to_string(i)], i);
+            if (i == 0) {
+                checkInputPASS(inputValue[to_string(roundStage % 4)],
+                               roundStage % 4);
             } else {
-                checkInputPLAY1(inputValue[to_string(i)], i);
+                checkInputPLAY1(inputValue[to_string((roundStage + i) % 4)],
+                                (roundStage + i) % 4);
             }
         }
         bool pass = true;
@@ -533,7 +544,8 @@ void roundInput(Json::Value &inputValue) {
         }
     } else {
         for (int i = 0; i < 4; i++) {
-            checkInputGANG(inputValue[to_string(i)], i);
+            checkInputGANG(inputValue[to_string((roundStage + i) % 4)],
+                           (roundStage + i) % 4);
         }
         roundStage -= 8;
     }
@@ -601,7 +613,8 @@ int main() {
 
         if (inputValue["initdata"]["quan"].isInt()) {
             quan = inputValue["initdata"]["quan"].asInt();
-            if (quan < 0 || quan > 3) quan = rand() % 4;
+            if (quan < 0 || quan > 3)
+                quan = rand() % 4;
         } else {
             quan = rand() % 4;
         }
