@@ -20,8 +20,8 @@ RTARGET = $(TARGETDIR)/fbot
 JUDGESOURCE = ../utils/judge/main.cpp
 JUDGE = ./ju
 
-TORCHPREFIX = /usr/local/libtorch
-TORCHFLAGS = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include -Wl,-rpath,$(TORCHPREFIX)/lib -Wl,--as-needed $(TORCHPREFIX)/lib/torch_cpu -Wl,--as-needed $(TORCHPREFIX)/lib/c10
+TORCHPREFIX = /usr/local/src/libtorch
+TORCHFLAGS = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include -Wl,-rpath,$(TORCHPREFIX)/lib $(TORCHPREFIX)/lib/libtorch.so $(TORCHPREFIX)/lib/libc10.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cpu.so -Wl,--as-needed $(TORCHPREFIX)/lib/libc10.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch.so -Wl,--as-needed
 
 RM = rm
 
