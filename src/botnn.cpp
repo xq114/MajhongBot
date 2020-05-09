@@ -22,6 +22,11 @@ struct NNInput {
     channel shanten[5][10];
 };
 
+struct NNOutput {
+    channel output[4];
+};
+
+enum class TAgent { discard, chi, peng, gong, hu };
 class Agent {
     NNInput input;
 
