@@ -2,23 +2,24 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #ifdef _BOTZONE_ONLINE
-// #include "MahjongGB/MahjongGB.h"
-// #include "MahjongGB/fan_calculator.cpp"
-// #include "MahjongGB/shanten.cpp"
+#include "MahjongGB/MahjongGB.h"
+#include "MahjongGB/fan_calculator.cpp"
+#include "MahjongGB/shanten.cpp"
 #include "jsoncpp/json.h"
+#elif defined __linux__
+#include "../utils/MahjongGBCPP/MahjongGB.cpp"
+#include <jsoncpp/json/json.h>
 #else
+#include "../utils/MahjongGBCPP/MahjongGB.cpp"
 #include <json/json.h>
 #endif
-#include "../utils/MahjongGBCPP/MahjongGB.cpp"
 
 #define SIMPLEIO 0
 //由玩家自己定义，0表示JSON交互，1表示简单交互。
-#define fr first
-#define sc second
-#define mp make_pair
 
 using namespace std;
 
@@ -58,6 +59,97 @@ string tile_num2str(int n) {
         c[1] = b - 4 + '1';
     }
     return c;
+}
+
+unordered_map<string, mahjong::tile_t> str2tile_t;
+void MahjongInit_t() {
+    for (int i = 1; i <= 9; i++) {
+        str2tile_t["W" + to_string(i)] =
+            mahjong::make_tile(TILE_SUIT_CHARACTERS, i);
+        str2tile_t["B" + to_string(i)] = mahjong::make_tile(TILE_SUIT_DOTS, i);
+        str2tile_t["T" + to_string(i)] =
+            mahjong::make_tile(TILE_SUIT_BAMBOO, i);
+    }
+    for (int i = 1; i <= 4; i++) {
+        str2tile_t["F" + to_string((i))] =
+            mahjong::make_tile(TILE_SUIT_HONORS, i);
+    }
+    for (int i = 1; i <= 3; i++) {
+        str2tile_t["J" + to_string((i))] =
+            mahjong::make_tile(TILE_SUIT_HONORS, i + 4);
+    }
+}
+
+int tile_t2num(mahjong::tile_t t) {
+    mahjong::suit_t su = mahjong::tile_get_suit(t);
+    mahjong::rank_t ra = mahjong::tile_get_rank(t);
+    return su * 9 + ra - 10;
+}
+
+mahjong::tile_t int2tilet(int n) {
+    int a = n / 9 + 1, b = n % 9 + 1;
+    mahjong::suit_t su = a;
+    mahjong::rank_t ra = b;
+    return mahjong::make_tile(su, ra);
+}
+
+string tile_t2str(mahjong::tile_t t) {
+    mahjong::suit_t su = mahjong::tile_get_suit(t);
+    mahjong::rank_t ra = mahjong::tile_get_rank(t);
+    int a = su - 1, b = ra - 1;
+    char c[3];
+    c[2] = '\0';
+    c[1] = '1' + b;
+    if (a == 0)
+        c[0] = 'W';
+    else if (a == 1)
+        c[0] = 'B';
+    else if (a == 2)
+        c[0] = 'T';
+    else if (b < 4)
+        c[0] = 'F';
+    else {
+        c[0] = 'J';
+        c[1] = b - 4 + '1';
+    }
+    return c;
+}
+
+typedef struct {
+    uint8_t form_flag;
+    int shanten;
+    int discard_tile;
+    int useful_cnt;
+} shant;
+
+int count(const mahjong::useful_table_t useful_table) {
+    int ans = 0;
+    for (int i = 0; i < mahjong::TILE_TABLE_SIZE; i++)
+        ans += useful_table[i];
+    return ans;
+}
+
+//如果和牌（番数大于等于8还没写），那么停止枚举(return false)，没和则继续
+//如果当前切牌方式能减小上听数，则记录当前切牌方式
+//如果当前切牌方式上听数不变但第一类有效牌增多，记录当前切牌方式
+bool enum_callback_info(shant *context, const mahjong::enum_result_t *result) {
+    if (result->shanten < context->shanten) {
+        context->form_flag = result->form_flag;
+        context->shanten = result->shanten;
+        context->discard_tile = result->discard_tile;
+        context->useful_cnt = count(result->useful_table);
+    }
+    if (result->shanten == context->shanten) {
+        if (count(result->useful_table) > context->useful_cnt) {
+            context->form_flag = result->form_flag;
+            context->shanten = result->shanten;
+            context->discard_tile = result->discard_tile;
+            context->useful_cnt = count(result->useful_table);
+        }
+    }
+    if (result->shanten == -1)
+        return false;
+    return true;
 }
 
 struct info {
@@ -213,10 +305,10 @@ struct info {
         mahjong::tile_t standing_tiles[13];
         int cnt = 0;
         for (string s : hand_str) {
-            standing_tiles[cnt++] = str2tile[s];
+            standing_tiles[cnt++] = str2tile_t[s];
         }
         string wtstr = tile_num2str(winTile);
-        mahjong::tile_t wt = str2tile[wtstr];
+        mahjong::tile_t wt = str2tile_t[wtstr];
         bool basicfw = mahjong::is_basic_form_win(standing_tiles, cnt, wt);
         bool sevenpw = mahjong::is_seven_pairs_win(standing_tiles, cnt, wt);
         bool thirtow =
@@ -232,7 +324,7 @@ struct info {
                 quan);
             int totalFan = 0;
             for (auto i = h.begin(); i != h.end(); ++i) {
-                totalFan += i->fr;
+                totalFan += i->first;
             }
             if (totalFan >= 8)
                 return totalFan;
@@ -261,14 +353,17 @@ struct info {
             if (!chi[myPlayerID][i].empty()) {
                 for (auto j = chi[myPlayerID][i].begin();
                      j != chi[myPlayerID][i].end(); ++j)
-                    pack.push_back(mp("CHI", mp(tile_num2str(i), *j)));
+                    pack.push_back(
+                        make_pair("CHI", make_pair(tile_num2str(i), *j)));
             }
             itmp = peng[myPlayerID][i];
             if (itmp)
-                pack.push_back(mp("PENG", mp(tile_num2str(i), id2jia(itmp))));
+                pack.push_back(make_pair(
+                    "PENG", make_pair(tile_num2str(i), id2jia(itmp))));
             itmp = gang[myPlayerID][i];
             if (itmp)
-                pack.push_back(mp("GANG", mp(tile_num2str(i), id2jia(itmp))));
+                pack.push_back(make_pair(
+                    "GANG", make_pair(tile_num2str(i), id2jia(itmp))));
         }
         return pack;
     }
@@ -285,11 +380,71 @@ struct info {
 
     bool isJUEZHANG(int tile) {
         //是不是桌上最后一张牌
-        for (int i = 0; i < 4; ++i) {
-            if (peng[i])
-                return 1;
-        }
+        // TODO: update this function
         return 0;
+    }
+
+    /**
+     * @brief 转化为MahjongGB库的手牌结构
+     *
+     * @retval 手牌结构
+     */
+    mahjong::hand_tiles_t parseHandTiles() {
+        // 信息记录中牌的顺序为万条饼风箭，且记录玩家信息中123分别表示是上家/对家/下家提供的
+        mahjong::hand_tiles_t ht;
+        memset(&ht, 0, sizeof(mahjong::hand_tiles_t));
+        for (int i = 0; i < 34; i++) {
+            if (!chi[0][i].empty()) {
+                for (auto j = chi[0][i].begin(); j != chi[0][i].end(); j++) {
+                    ++ht.pack_count;
+                    ht.fixed_packs[ht.pack_count] =
+                        mahjong::make_pack(*j, 1, int2tilet(i));
+                }
+            }
+            if (peng[0][i] != 0) {
+                ++ht.pack_count;
+                ht.fixed_packs[ht.pack_count] =
+                    mahjong::make_pack(peng[0][i], 2, int2tilet(i));
+            }
+            if (gang[0][i] != 0) {
+                ++ht.pack_count;
+                ht.fixed_packs[ht.pack_count] =
+                    mahjong::make_pack(gang[0][i], 3, int2tilet(i));
+            }
+            if (angang[i]) {
+                ++ht.pack_count;
+                ht.fixed_packs[ht.pack_count] =
+                    mahjong::make_pack(0, 3, int2tilet(i));
+            }
+            for (int j = 0; j < hand[i]; j++) {
+                ht.standing_tiles[ht.tile_count++] =
+                    mahjong::make_tile(i / 9 + 1, i % 9 + 1);
+            }
+        }
+        return ht;
+    }
+
+    /**
+     * @brief 模型1：决定打哪张牌
+     *
+     * @param tile 摸到的牌，优先考虑打这张
+     * @retval 要打的牌的编号
+     */
+    int decisionPLAY(int tile) {
+        shant context;
+        mahjong::hand_tiles_t hand_tiles = parseHandTiles();
+        mahjong::tile_t serving_tile = int2tilet(tile);
+        mahjong::win_flag_t form_flag = FORM_FLAG_ALL;
+        mahjong::useful_table_t useful_table;
+        context.discard_tile = int2tilet(tile);
+        context.shanten = mahjong::basic_form_shanten(
+            hand_tiles.standing_tiles, hand_tiles.tile_count, &useful_table);
+        context.useful_cnt = count(useful_table);
+        enum_discard_tile(
+            &hand_tiles, serving_tile, form_flag, &context,
+            reinterpret_cast<mahjong::enum_callback_t>(enum_callback_info));
+        mahjong::tile_t ti = context.discard_tile;
+        return tile_t2num(ti);
     }
 
     /*决策函数*/
@@ -310,7 +465,6 @@ struct info {
         if (canHu(tile, 1, 0))
             return "HU";
 
-        ++hand[tile];
         string resp;
         int itmp;
         itmp = canAnGang();
@@ -323,12 +477,12 @@ struct info {
             resp = "BUGANG " + tile_num2str(tile);
         } else {
             //出牌策略
-            for (int i = 33; i >= 0; --i) {
-                if (hand[i] != 0) {
-                    resp = "PLAY " + tile_num2str(i);
-                    break;
-                }
-            }
+            // TODO: 解决听牌不到8番时无法胡牌的问题。可行思路：不胡基本牌型
+            int i = decisionPLAY(tile);
+            ++hand[tile];
+            assert(hand[i] != 0);
+            // --hand[i];
+            resp = "PLAY " + tile_num2str(i);
         }
         return resp;
     }
@@ -344,6 +498,8 @@ struct info {
         if (canMingGang(tile, itmp))
             resp = "GANG";
         //是否可以碰
+        // TODO: 发现有碰而不碰。似乎不应该？虽说只胡特殊牌型确实不需要碰
+        // TODO: 碰完打牌也应调用打牌模型
         if (canPeng(tile, itmp)) {
             resp = "PENG ";
             for (int i = 33; i >= 0; --i) {
@@ -473,16 +629,26 @@ int main() {
     req = stmp;
 #else
     Json::Value inputJSON;
+#ifdef _BOTZONE_ONLINE
     cin >> inputJSON;
+#else
+    /* 测试数据 */
+    istringstream iss("{\
+    \"requests\":[\"0 1 1\",\"1 0 0 0 0 W4 W7 W5 T6 B6 W6 J3 F4 W6 T9 T2 F3 W5\",\"3 0 DRAW\",\"3 0 PLAY F1\",\"2 F1\",\"3 1 PLAY F1\",\"3 2 DRAW\",\"3 2 PLAY J3\",\"3 3 DRAW\",\"3 3 PLAY W9\",\"3 0 DRAW\",\"3 0 PLAY W3\",\"2 B7\",\"3 1 PLAY T9\",\"3 2 DRAW\",\"3 2 PLAY W1\",\"3 3 DRAW\",\"3 3 PLAY B4\",\"3 0 DRAW\",\"3 0 PLAY W4\",\"2 W6\",\"3 1 PLAY F3\",\"3 2 DRAW\",\"3 2 PLAY B1\",\"3 3 DRAW\",\"3 3 PLAY F2\",\"3 0 DRAW\",\"3 0 PLAY T5\",\"2 F4\",\"3 1 PLAY J3\",\"3 2 DRAW\",\"3 2 PLAY F1\",\"3 3 DRAW\",\"3 3 PLAY W2\",\"3 0 DRAW\",\"3 0 PLAY F3\",\"2 B8\",\"3 1 PLAY T2\",\"3 2 DRAW\",\"3 2 PLAY F4\",\"3 3 DRAW\",\"3 3 PLAY W1\",\"3 0 DRAW\",\"3 0 PLAY W8\",\"2 T3\",\"3 1 PLAY T3\",\"3 2 DRAW\",\"3 2 PLAY B8\",\"3 3 DRAW\",\"3 3 PLAY B7\",\"3 0 DRAW\",\"3 0 PLAY T1\",\"2 T1\",\"3 1 PLAY T1\",\"3 2 DRAW\",\"3 2 PLAY F1\",\"3 3 DRAW\",\"3 3 PLAY W6\",\"3 0 DRAW\",\"3 0 PLAY B2\",\"2 T8\",\"3 1 PLAY W6\",\"3 2 DRAW\",\"3 2 PLAY B1\",\"3 3 DRAW\",\"3 3 PLAY F3\",\"3 0 DRAW\",\"3 0 PLAY F2\",\"2 J3\",\"3 1 PLAY J3\",\"3 2 DRAW\",\"3 2 PLAY T7\"],\"responses\":[\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY F1\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY T9\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY F3\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY J3\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY T2\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY T3\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY T1\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY W6\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PLAY J3\",\"PASS\",\"PASS\"],\
+    \"data\": \"1 1 0 34 1 57 0 0 0 0 0 0 0 0 1 2 2 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 1 0 1 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 1 0 0 1 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 1 0 1 0 0 0 2 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 2 0 0 1 0 0 1 1 1 0 0 0 1 0 0 1 0 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 \"\
+}");
+    iss >> inputJSON;
+#endif
     turnID = inputJSON["responses"].size();
     req = inputJSON["requests"][turnID].asString();
-    if (turnID > 0 && inputJSON["data"])
+    if (turnID > 0 && inputJSON["data"] != Json::nullValue)
         info.loadInfo(inputJSON["data"].asString());
 #endif
     int itmp;
     ostringstream sout;
     istringstream sin;
     MahjongInit();
+    MahjongInit_t();
     sin.str(req);
     sin >> itmp;
     if (itmp == 0) {
@@ -503,9 +669,8 @@ int main() {
         sin >> stmp;
         int tile = tile_str2num(stmp);
         info.addZIMO(tile);
-        /*自摸后的决策*/
+        /*摸牌后的决策*/
         resp = info.decisionZIMO(tile);
-
     } else {
         sin >> itmp >> stmp;
         int tile;

@@ -1,3 +1,4 @@
+// Dilly Wang
 // 信息记录中牌的顺序为万条饼风箭，且记录玩家信息中123分别表示是上家/对家/下家提供的
 hand_tiles_t info2hand_tiles(info &info) {
     hand_tiles_t ht;

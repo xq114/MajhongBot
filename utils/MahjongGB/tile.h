@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
- // force inline
+// force inline
 #ifndef FORCE_INLINE
 #if defined(_MSC_VER) && (_MSC_VER >= 1200)
 #define FORCE_INLINE __forceinline
@@ -37,11 +37,12 @@
 #endif
 #endif
 
- // unreachable
+// unreachable
 #ifndef UNREACHABLE
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 #define UNREACHABLE() __assume(0)
-#elif defined(__clang__) || (defined(__GNUC__) && ((__GNUC__ << 8 | __GNUC_MINOR__) >= 0x405))
+#elif defined(__clang__) ||                                                    \
+    (defined(__GNUC__) && ((__GNUC__ << 8 | __GNUC_MINOR__) >= 0x405))
 #define UNREACHABLE() __builtin_unreachable()
 #else
 #define UNREACHABLE() assert(0)
@@ -53,30 +54,40 @@ namespace mahjong {
 /**
  * @brief 代码注释中用到的术语简介
  * - 顺子：数牌中，花色相同序数相连的3张牌。
- * - 刻子：三张相同的牌。碰出的为明刻，未碰出的为暗刻。俗称坎。杠也算刻子，明杠算明刻，暗杠算暗刻。
+ * -
+ * 刻子：三张相同的牌。碰出的为明刻，未碰出的为暗刻。俗称坎。杠也算刻子，明杠算明刻，暗杠算暗刻。
  * - 面子：顺子和刻子的统称。俗称一句话、一坎牌。
  * - 雀头：基本和牌形式中，单独组合的对子，也叫将、眼。
  * - 基本和型：4面子1雀头的和牌形式。
- * - 特殊和型：非4面子1雀头的和牌形式，在国标规则中，有七对、十三幺、全不靠等特殊和型。
- * - 门清：也叫门前清，指不吃、不碰、不明杠的状态。特殊和型必然是门清状态。暗杠虽然不破门清，但会暴露出手牌不是特殊和型的信息。
- * - 副露：吃牌、碰牌、杠牌的统称，即利用其他选手打出的牌完成自己手牌面子的行为，一般不包括暗杠，也叫鸣牌，俗称动牌。
+ * -
+ * 特殊和型：非4面子1雀头的和牌形式，在国标规则中，有七对、十三幺、全不靠等特殊和型。
+ * -
+ * 门清：也叫门前清，指不吃、不碰、不明杠的状态。特殊和型必然是门清状态。暗杠虽然不破门清，但会暴露出手牌不是特殊和型的信息。
+ * -
+ * 副露：吃牌、碰牌、杠牌的统称，即利用其他选手打出的牌完成自己手牌面子的行为，一般不包括暗杠，也叫鸣牌，俗称动牌。
  *     副露有时候也包括暗杠，此时将暗杠称为之暗副露，而吃、碰、明杠称为明副露。
  * - 立牌：整个手牌除去吃、碰、杠之后的牌。
  * - 手牌：包括立牌和吃、碰、杠的牌，有时仅指立牌。
  * - 听牌：只差所需要的一张牌即能和牌的状态。俗称下叫、落叫、叫和（糊）。
- * - 一上听：指差一张就能听牌的状态，也叫一向听、一入听。以此类推有二上听、三上听、N上听。
+ * -
+ * 一上听：指差一张就能听牌的状态，也叫一向听、一入听。以此类推有二上听、三上听、N上听。
  * - 上听数：达到听牌状态需要牌的张数。
  * - 有效牌：能使上听数减少的牌，也称进张牌、上张牌。
  * - 改良牌：能使有效牌增加的牌。通俗来说就是能使进张面变宽的牌。
  * - 对子：两张相同的牌。雀头一定是对子，但对子不一定是雀头。
- * - 两面：数牌中，花色相同数字相邻的两张牌，如45m，与两侧的牌都构成顺子。也叫两头。
- * - 嵌张：数牌中，花色相同数字相隔1的两张牌，如57s，只能与中间的牌构成顺子，中间的这张牌称为嵌张。
- * - 边张：也是数字相邻的两张牌，但由于处在边界位置，只能与一侧的牌能构成顺子，如12只能与3构成顺子、89只能与7构成顺子，这张3或者7便称为边张。
- * - 搭子：指差一张牌就能构成1组面子的两张牌。其形态有刻子搭子（即对子）、两面搭子、嵌张搭子、边张搭子。
- * - 复合搭子：多张牌构成的搭子。常见的有：连嵌张、两面带对子、嵌张带对子、边张带对子等等形态。
- * - 对倒：听牌时，其他牌都已经构成面子，剩余两对，只需任意一对成刻即可和牌，此时另一对充当雀头，这种听牌形态叫对倒，也叫双碰、对碰、对杵。
+ * -
+ * 两面：数牌中，花色相同数字相邻的两张牌，如45m，与两侧的牌都构成顺子。也叫两头。
+ * -
+ * 嵌张：数牌中，花色相同数字相隔1的两张牌，如57s，只能与中间的牌构成顺子，中间的这张牌称为嵌张。
+ * -
+ * 边张：也是数字相邻的两张牌，但由于处在边界位置，只能与一侧的牌能构成顺子，如12只能与3构成顺子、89只能与7构成顺子，这张3或者7便称为边张。
+ * -
+ * 搭子：指差一张牌就能构成1组面子的两张牌。其形态有刻子搭子（即对子）、两面搭子、嵌张搭子、边张搭子。
+ * -
+ * 复合搭子：多张牌构成的搭子。常见的有：连嵌张、两面带对子、嵌张带对子、边张带对子等等形态。
+ * -
+ * 对倒：听牌时，其他牌都已经构成面子，剩余两对，只需任意一对成刻即可和牌，此时另一对充当雀头，这种听牌形态叫对倒，也叫双碰、对碰、对杵。
  */
-
 
 /**
  * @addtogroup tile
@@ -93,11 +104,11 @@ typedef uint8_t suit_t;
  */
 typedef uint8_t rank_t;
 
-#define TILE_SUIT_NONE          0  ///< 无效
-#define TILE_SUIT_CHARACTERS    1  ///< 万子（CHARACTERS）
-#define TILE_SUIT_BAMBOO        2  ///< 条子（BAMBOO）
-#define TILE_SUIT_DOTS          3  ///< 饼子（DOTS）
-#define TILE_SUIT_HONORS        4  ///< 字牌（HONORS）
+#define TILE_SUIT_NONE 0       ///< 无效
+#define TILE_SUIT_CHARACTERS 1 ///< 万子（CHARACTERS）
+#define TILE_SUIT_BAMBOO 2     ///< 条子（BAMBOO）
+#define TILE_SUIT_DOTS 3       ///< 饼子（DOTS）
+#define TILE_SUIT_HONORS 4     ///< 字牌（HONORS）
 
 /**
  * @brief 牌\n
@@ -150,18 +161,46 @@ static FORCE_INLINE bool is_flower(tile_t tile) {
  * @param [in] tile 牌
  * @return rank_t 点数
  */
-static FORCE_INLINE rank_t tile_get_rank(tile_t tile) {
-    return (tile & 0xF);
-}
+static FORCE_INLINE rank_t tile_get_rank(tile_t tile) { return (tile & 0xF); }
 
 /**
  * @brief 所有牌的值，不包括花牌
  */
 enum tile_value_t {
-    TILE_1m = 0x11, TILE_2m, TILE_3m, TILE_4m, TILE_5m, TILE_6m, TILE_7m, TILE_8m, TILE_9m,
-    TILE_1s = 0x21, TILE_2s, TILE_3s, TILE_4s, TILE_5s, TILE_6s, TILE_7s, TILE_8s, TILE_9s,
-    TILE_1p = 0x31, TILE_2p, TILE_3p, TILE_4p, TILE_5p, TILE_6p, TILE_7p, TILE_8p, TILE_9p,
-    TILE_E  = 0x41, TILE_S , TILE_W , TILE_N , TILE_C , TILE_F , TILE_P ,
+    TILE_1m = 0x11,
+    TILE_2m,
+    TILE_3m,
+    TILE_4m,
+    TILE_5m,
+    TILE_6m,
+    TILE_7m,
+    TILE_8m,
+    TILE_9m,
+    TILE_1s = 0x21,
+    TILE_2s,
+    TILE_3s,
+    TILE_4s,
+    TILE_5s,
+    TILE_6s,
+    TILE_7s,
+    TILE_8s,
+    TILE_9s,
+    TILE_1p = 0x31,
+    TILE_2p,
+    TILE_3p,
+    TILE_4p,
+    TILE_5p,
+    TILE_6p,
+    TILE_7p,
+    TILE_8p,
+    TILE_9p,
+    TILE_E = 0x41,
+    TILE_S,
+    TILE_W,
+    TILE_N,
+    TILE_C,
+    TILE_F,
+    TILE_P,
     TILE_TABLE_SIZE
 };
 
@@ -169,26 +208,28 @@ enum tile_value_t {
  * @brief 所有合法的牌，不包括花牌
  */
 static const tile_t all_tiles[] = {
-    TILE_1m, TILE_2m, TILE_3m, TILE_4m, TILE_5m, TILE_6m, TILE_7m, TILE_8m, TILE_9m,
-    TILE_1s, TILE_2s, TILE_3s, TILE_4s, TILE_5s, TILE_6s, TILE_7s, TILE_8s, TILE_9s,
-    TILE_1p, TILE_2p, TILE_3p, TILE_4p, TILE_5p, TILE_6p, TILE_7p, TILE_8p, TILE_9p,
-    TILE_E , TILE_S , TILE_W , TILE_N , TILE_C , TILE_F , TILE_P
-};
+    TILE_1m, TILE_2m, TILE_3m, TILE_4m, TILE_5m, TILE_6m, TILE_7m,
+    TILE_8m, TILE_9m, TILE_1s, TILE_2s, TILE_3s, TILE_4s, TILE_5s,
+    TILE_6s, TILE_7s, TILE_8s, TILE_9s, TILE_1p, TILE_2p, TILE_3p,
+    TILE_4p, TILE_5p, TILE_6p, TILE_7p, TILE_8p, TILE_9p, TILE_E,
+    TILE_S,  TILE_W,  TILE_N,  TILE_C,  TILE_F,  TILE_P};
 
 /**
  * @brief 牌表类型
  *
  * 说明：在判断听牌、计算上听数等算法中，主流的对于牌有两种存储方式：
- * - 一种是用牌表，各索引表示各种牌拥有的枚数，这种存储方式的优点是在递归计算时削减面子只需要修改表中相应下标的值，缺点是一手牌的总数不方便确定
- * - 另一种是直接用牌的数组，这种存储方式的优点是很容易确定一手牌的总数，缺点是在递归计算时削减面子不方便，需要进行数组删除元素操作
+ * -
+ * 一种是用牌表，各索引表示各种牌拥有的枚数，这种存储方式的优点是在递归计算时削减面子只需要修改表中相应下标的值，缺点是一手牌的总数不方便确定
+ * -
+ * 另一种是直接用牌的数组，这种存储方式的优点是很容易确定一手牌的总数，缺点是在递归计算时削减面子不方便，需要进行数组删除元素操作
  */
 typedef uint16_t tile_table_t[TILE_TABLE_SIZE];
 
-#define PACK_TYPE_NONE 0  ///< 无效
-#define PACK_TYPE_CHOW 1  ///< 顺子
-#define PACK_TYPE_PUNG 2  ///< 刻子
-#define PACK_TYPE_KONG 3  ///< 杠
-#define PACK_TYPE_PAIR 4  ///< 雀头
+#define PACK_TYPE_NONE 0 ///< 无效
+#define PACK_TYPE_CHOW 1 ///< 顺子
+#define PACK_TYPE_PUNG 2 ///< 刻子
+#define PACK_TYPE_KONG 3 ///< 杠
+#define PACK_TYPE_PAIR 4 ///< 雀头
 
 /**
  * @brief 牌组
@@ -275,21 +316,18 @@ static FORCE_INLINE uint8_t pack_get_type(pack_t pack) {
  * @param [in] pack 牌组
  * @return tile_t 牌（对于顺子，为中间那张牌）
  */
-static FORCE_INLINE tile_t pack_get_tile(pack_t pack) {
-    return (pack & 0xFF);
-}
+static FORCE_INLINE tile_t pack_get_tile(pack_t pack) { return (pack & 0xFF); }
 
 /**
  * @brief 手牌结构
  *  手牌结构一定满足等式：3*副露的牌组数+立牌数=13
  */
 struct hand_tiles_t {
-    pack_t fixed_packs[5];      ///< 副露的牌组（面子），包括暗杠
-    intptr_t pack_count;        ///< 副露的牌组（面子）数，包括暗杠
-    tile_t standing_tiles[13];  ///< 立牌
-    intptr_t tile_count;        ///< 立牌数
+    pack_t fixed_packs[5]; ///< 副露的牌组（面子），包括暗杠
+    intptr_t pack_count;   ///< 副露的牌组（面子）数，包括暗杠
+    tile_t standing_tiles[13]; ///< 立牌
+    intptr_t tile_count;       ///< 立牌数
 };
-
 
 /**
  * @brief 判断是否为绿一色构成牌
@@ -299,7 +337,8 @@ struct hand_tiles_t {
  */
 static FORCE_INLINE bool is_green(tile_t tile) {
     // 最基本的逐个判断，23468s及发财为绿一色构成牌
-    //return (tile == TILE_2s || tile == TILE_3s || tile == TILE_4s || tile == TILE_6s || tile == TILE_8s || tile == TILE_F);
+    // return (tile == TILE_2s || tile == TILE_3s || tile == TILE_4s || tile ==
+    // TILE_6s || tile == TILE_8s || tile == TILE_F);
 
     // 算法原理：
     // 0x48-0x11=0x37=55刚好在一个64位整型的范围内，
@@ -316,8 +355,10 @@ static FORCE_INLINE bool is_green(tile_t tile) {
  */
 static FORCE_INLINE bool is_reversible(tile_t tile) {
     // 最基本的逐个判断：245689s、1234589p及白板为推不倒构成牌
-    //return (tile == TILE_2s || tile == TILE_4s || tile == TILE_5s || tile == TILE_6s || tile == TILE_8s || tile == TILE_9s ||
-    //    tile == TILE_1p || tile == TILE_2p || tile == TILE_3p || tile == TILE_4p || tile == TILE_5p || tile == TILE_8p || tile == TILE_9p ||
+    // return (tile == TILE_2s || tile == TILE_4s || tile == TILE_5s || tile ==
+    // TILE_6s || tile == TILE_8s || tile == TILE_9s ||
+    //    tile == TILE_1p || tile == TILE_2p || tile == TILE_3p || tile ==
+    //    TILE_4p || tile == TILE_5p || tile == TILE_8p || tile == TILE_9p ||
     //    tile == TILE_P);
 
     // 算法原理同绿一色构成牌判断函数
@@ -332,7 +373,8 @@ static FORCE_INLINE bool is_reversible(tile_t tile) {
  */
 static FORCE_INLINE bool is_terminal(tile_t tile) {
     // 最基本的逐个判断
-    //return (tile == TILE_1m || tile == TILE_9m || tile == TILE_1s || tile == TILE_9s || tile == TILE_1p || tile == TILE_9p);
+    // return (tile == TILE_1m || tile == TILE_9m || tile == TILE_1s || tile ==
+    // TILE_9s || tile == TILE_1p || tile == TILE_9p);
 
     // 算法原理：观察数牌幺九的二进制位：
     // 0x11：0001 0001
@@ -381,9 +423,12 @@ static FORCE_INLINE bool is_honor(tile_t tile) {
  * @return bool
  */
 static FORCE_INLINE bool is_numbered_suit(tile_t tile) {
-    if (tile < 0x1A) return (tile > 0x10);
-    if (tile < 0x2A) return (tile > 0x20);
-    if (tile < 0x3A) return (tile > 0x30);
+    if (tile < 0x1A)
+        return (tile > 0x10);
+    if (tile < 0x2A)
+        return (tile > 0x20);
+    if (tile < 0x3A)
+        return (tile > 0x30);
     return false;
 }
 
@@ -437,6 +482,6 @@ static FORCE_INLINE bool is_rank_equal_quick(tile_t tile0, tile_t tile1) {
  * @}
  */
 
-}
+} // namespace mahjong
 
 #endif
