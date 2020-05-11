@@ -60,4 +60,4 @@ $(STARGET): $(SOURCES)
 
 clean:
 	$(RM) $(TARGETDIR)/*
-	$(RM) $(OBJECTS)
+	$(RM) $(OBJECTS) botnn

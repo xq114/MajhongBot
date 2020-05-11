@@ -36,7 +36,6 @@ typedef struct {
     int shanten;
     int dicard_tile;
     int useful_cnt;
-
 } shant;
 int count(useful_table_t useful_table) {
     int ans;
