@@ -399,22 +399,22 @@ struct info {
         mahjong::hand_tiles_t ht;
         memset(&ht, 0, sizeof(mahjong::hand_tiles_t));
         for (int i = 0; i < 34; i++) {
-            if (!chi[0][i].empty()) {
-                for (auto j = chi[0][i].begin(); j != chi[0][i].end(); j++) {
+            if (!chi[myPlayerID][i].empty()) {
+                for (auto j = chi[myPlayerID][i].begin(); j != chi[myPlayerID][i].end(); j++) {
                     ++ht.pack_count;
                     ht.fixed_packs[ht.pack_count] =
-                        mahjong::make_pack(*j, 1, int2tilet(i));
+                        mahjong::make_pack(1, 1, int2tilet(i));
                 }
             }
-            if (peng[0][i] != -1) {
+            if (peng[myPlayerID][i] != -1) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
-                    mahjong::make_pack(peng[0][i], 2, int2tilet(i));
+                    mahjong::make_pack(id2jia(peng[myPlayerID][i]), 2, int2tilet(i));
             }
-            if (gang[0][i] != -1) {
+            if (gang[myPlayerID][i] != -1) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
-                    mahjong::make_pack(gang[0][i], 3, int2tilet(i));
+                    mahjong::make_pack(id2jia(gang[myPlayerID][i]), 3, int2tilet(i));
             }
             if (angang[i]) {
                 ++ht.pack_count;
@@ -422,8 +422,7 @@ struct info {
                     mahjong::make_pack(0, 3, int2tilet(i));
             }
             for (int j = 0; j < hand[i]; j++) {
-                ht.standing_tiles[ht.tile_count++] =
-                    mahjong::make_tile(i / 9 + 1, i % 9 + 1);
+                ht.standing_tiles[ht.tile_count++] =int2tilet(i);
             }
         }
         return ht;
@@ -493,6 +492,7 @@ struct info {
     }
 
     string decisionTILE(int itmp, int tile) {
+        if (itmp==myPlayerID) return "PASS";
         //桌上有一张牌的决策，可能是别人自摸/碰/吃后出的牌
         //可能的决策：胡，明杠，碰，吃，pass
         if (canHu(tile, 0, 0))
@@ -500,33 +500,29 @@ struct info {
 
         string resp;
         //是否可以明杠
+    /*
         if (canMingGang(tile, itmp))
-            resp = "GANG";
+            return "GANG";
         //是否可以碰
         // TODO: 发现有碰而不碰。似乎不应该？虽说只胡特殊牌型确实不需要碰
         // TODO: 碰完打牌也应调用打牌模型
         if (canPeng(tile, itmp)) {
-            resp = "PENG ";
-            for (int i = 33; i >= 0; --i) {
-                if (i != tile && hand[i] != 0) {
-                    resp += tile_num2str(i);
-                    break;
-                }
-            }
+            int i=decisionPLAY(tile);
+            if (i!=tile) {
+            resp="PENG "+tile_num2str(i);
+            return resp;}
         }
         //是否可以吃
         vector<int> v = canChi(tile, itmp);
         if (!v.empty()) {
             resp = "CHI " + tile_num2str(v.front()) + " ";
-            for (int i = 33; i >= 0; --i) {
-                if (i != v.front() && i != v.front() + 1 &&
-                    i != v.front() - 1 && hand[i] != 0) {
-                    resp += tile_num2str(i);
-                    break;
-                }
+            int i=decisionPLAY(tile);
+            if (i != v.front() && i != v.front() + 1 && i != v.front() - 1){
+                resp += tile_num2str(i);
+                return resp;
             }
         }
-        //决定是吃碰杠还是pass
+        //决定是吃碰杠还是pass */
         resp = "PASS";
 
         return resp;

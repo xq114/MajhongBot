@@ -23,7 +23,7 @@ hand_tiles_t info2hand_tiles(info &info) {
         if (angang[i]) {
             ++ht.pack_count;
             ht.pack_t[ht.pack_count] =
-                make_pack(0, 3, make_pack(i / 9 + 1, i % 9));
+                make_pack(0, 3, maketile(i / 9 + 1, i % 9));
         }
         for (int j = 0; j < hand[i]; j++) {
             ht.tile_count++;
