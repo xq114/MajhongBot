@@ -159,8 +159,8 @@ struct info {
     int hand[34] = {0}; // hand存储的顺序: W1-9, B1-9, T1-9, F1-4, J1-3
 
     // 记录所有玩家碰杠吃的情况
-    int peng[4][34] = {0};       // 记录的是喂牌的player id
-    int gang[4][34] = {0};       // 不包括暗杠
+    int peng[4][34] = {-1};       // 记录的是喂牌的player id
+    int gang[4][34] = {-1};       // 不包括暗杠
     int angang[34] = {0};        //只记录了自己的暗杠
     int angang_ = 0;             //记录自己打算杠的牌
     vector<int> chi[4][34] = {}; //表示吃了第几张牌
@@ -226,7 +226,7 @@ struct info {
 
     void addGANG(int itmp) {
         if (lastCard != 34) { //明杠
-            ++gang[itmp][lastCard];
+            gang[itmp][lastCard] = lastPlayer;
             if (itmp == myPlayerID) {
                 hand[lastCard] = 0;
                 bupai = 1;
@@ -357,11 +357,11 @@ struct info {
                         make_pair("CHI", make_pair(tile_num2str(i), *j)));
             }
             itmp = peng[myPlayerID][i];
-            if (itmp)
+            if (itmp!=-1)
                 pack.push_back(make_pair(
                     "PENG", make_pair(tile_num2str(i), id2jia(itmp))));
             itmp = gang[myPlayerID][i];
-            if (itmp)
+            if (itmp!=-1)
                 pack.push_back(make_pair(
                     "GANG", make_pair(tile_num2str(i), id2jia(itmp))));
         }
@@ -401,12 +401,12 @@ struct info {
                         mahjong::make_pack(*j, 1, int2tilet(i));
                 }
             }
-            if (peng[0][i] != 0) {
+            if (peng[0][i] != -1) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
                     mahjong::make_pack(peng[0][i], 2, int2tilet(i));
             }
-            if (gang[0][i] != 0) {
+            if (gang[0][i] != -1) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
                     mahjong::make_pack(gang[0][i], 3, int2tilet(i));
@@ -472,7 +472,7 @@ struct info {
             //在暗杠和出牌里选
             angang_ = itmp;
             resp = "GANG " + tile_num2str(tile);
-        } else if (peng[myPlayerID][tile]) {
+        } else if (peng[myPlayerID][tile]!=-1) {
             //在补杠和出牌里选
             resp = "BUGANG " + tile_num2str(tile);
         } else {
