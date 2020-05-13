@@ -159,8 +159,8 @@ struct info {
     int hand[34] = {0}; // hand存储的顺序: W1-9, B1-9, T1-9, F1-4, J1-3
 
     // 记录所有玩家碰杠吃的情况
-    int peng[4][34] = {-1};       // 记录的是喂牌的player id
-    int gang[4][34] = {-1};       // 不包括暗杠
+    int peng[4][34];       // 记录的是喂牌的player id
+    int gang[4][34];       // 不包括暗杠
     int angang[34] = {0};        //只记录了自己的暗杠
     int angang_ = 0;             //记录自己打算杠的牌
     vector<int> chi[4][34] = {}; //表示吃了第几张牌
@@ -174,6 +174,11 @@ struct info {
 
     bool bupai = 0; //记录这局的自摸是不是杠后补牌
 
+    info(){
+        memset(gang,-1,136*sizeof(int));
+        memset(peng,-1,136*sizeof(int));
+    }
+    
     /*addxxx都是用来记录req的信息的*/
     void addZIMO(int tile) {
         --leftTile;
