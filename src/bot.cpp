@@ -86,7 +86,7 @@ int tile_t2num(mahjong::tile_t t) {
     return su * 9 + ra - 10;
 }
 
-mahjong::tile_t int2tilet(int n) {
+mahjong::tile_t num2tile_t(int n) {
     int a = n / 9 + 1, b = n % 9 + 1;
     mahjong::suit_t su = a;
     mahjong::rank_t ra = b;
@@ -398,23 +398,23 @@ struct info {
                 for (auto j = chi[0][i].begin(); j != chi[0][i].end(); j++) {
                     ++ht.pack_count;
                     ht.fixed_packs[ht.pack_count] =
-                        mahjong::make_pack(*j, 1, int2tilet(i));
+                        mahjong::make_pack(*j, 1, num2tile_t(i));
                 }
             }
             if (peng[0][i] != 0) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
-                    mahjong::make_pack(peng[0][i], 2, int2tilet(i));
+                    mahjong::make_pack(peng[0][i], 2, num2tile_t(i));
             }
             if (gang[0][i] != 0) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
-                    mahjong::make_pack(gang[0][i], 3, int2tilet(i));
+                    mahjong::make_pack(gang[0][i], 3, num2tile_t(i));
             }
             if (angang[i]) {
                 ++ht.pack_count;
                 ht.fixed_packs[ht.pack_count] =
-                    mahjong::make_pack(0, 3, int2tilet(i));
+                    mahjong::make_pack(0, 3, num2tile_t(i));
             }
             for (int j = 0; j < hand[i]; j++) {
                 ht.standing_tiles[ht.tile_count++] =
@@ -433,10 +433,10 @@ struct info {
     int decisionPLAY(int tile) {
         shant context;
         mahjong::hand_tiles_t hand_tiles = parseHandTiles();
-        mahjong::tile_t serving_tile = int2tilet(tile);
+        mahjong::tile_t serving_tile = num2tile_t(tile);
         mahjong::win_flag_t form_flag = FORM_FLAG_ALL;
         mahjong::useful_table_t useful_table;
-        context.discard_tile = int2tilet(tile);
+        context.discard_tile = num2tile_t(tile);
         context.shanten = mahjong::basic_form_shanten(
             hand_tiles.standing_tiles, hand_tiles.tile_count, &useful_table);
         context.useful_cnt = count(useful_table);
