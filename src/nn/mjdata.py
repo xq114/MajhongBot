@@ -39,4 +39,7 @@ def get_filenames_split(file_num, output_path="./model/", val_ratio=0.2):
 
 
 if __name__ == '__main__':
-    get_filenames_split(10)
+    torch.classes.load_library("txt2batch.so")
+    print(torch.classes.loaded_libraries)
+    loader = torch.classes.mahjong.Loader(0)
+    print(loader.length())
