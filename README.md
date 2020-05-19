@@ -11,11 +11,18 @@
 用到libtorch库，安装方法：
 
 ```shell
-# linux
+# linux, cxx11 abi
 cd /usr/local/src
-wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
-unzip libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+sudo wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+sudo unzip libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+
+# linux, pre-cxx11 abi
+cd /usr/local/src
+sudo wget https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-1.5.0%2Bcpu.zip
+sudo unzip libtorch-shared-with-deps-1.5.0%2Bcpu.zip
 ```
+
+注意：仅使用c++两种版本都可以，如要做c++和python互相调用则必须用pre-cxx11 abi版本
 
 ![Mac OS 预编译包](https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip)，解压到/usr/local/src即可（未测试）
 
@@ -69,21 +76,21 @@ make amal
 
 ## 代码统计
 ```
-cloc . --fullpath --not-match-d=./nn/data/
+loc . --fullpath --not-match-d=./nn/data/
       18 text files.
-      18 unique files.
-      11 files ignored.
+      18 unique files.                              
+       6 files ignored.
 
-github.com/AlDanial/cloc v 1.84  T=4.10 s (3.9 files/s, 450.9 lines/s)
+github.com/AlDanial/cloc v 1.82  T=0.49 s (32.5 files/s, 3773.7 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 C++                              7             96            121           1062
 Python                           3             61             49            206
-make                             2             25              0             67
-C/C++ Header                     3             29             70             52
+make                             2             25              0             70
+C/C++ Header                     3             30             72             53
 JSON                             1              0              0             12
 -------------------------------------------------------------------------------
-SUM:                            16            211            240           1399
+SUM:                            16            212            242           1403
 -------------------------------------------------------------------------------
 ```
