@@ -4,11 +4,14 @@ ifeq "$(ERR)" "0"
 else
 	CXX = g++
 endif
-CXXFLAGS = -std=c++17 -Wall -Wextra -fPIC
+CXXFLAGS = -std=c++17 -Wall -Wextra -D_GLIBCXX_USE_CXX11_ABI=0 -DAT_PARALLEL_OPENMP=1 -fopenmp
+SHARED = -fPIC -shared
 RM = rm
 
 TORCHPREFIX = /usr/local/src/libtorch
-TORCHFLAGS = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include -Wl,-rpath,$(TORCHPREFIX)/lib $(TORCHPREFIX)/lib/libtorch.so $(TORCHPREFIX)/lib/libc10.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cpu.so -Wl,--as-needed $(TORCHPREFIX)/lib/libc10.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch.so -Wl,--as-needed
+CUDAPREFIX = /usr/local/cuda
+CXX_INCLUDES = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include -isystem $(CUDAPREFIX)/include
+TORCHFLAGS = -Wl,-rpath,$(TORCHPREFIX)/lib:$(CUDAPREFIX)/lib64/stubs:$(CUDAPREFIX)/lib64 $(TORCHPREFIX)/lib/libtorch.so $(TORCHPREFIX)/lib/libc10.so $(CUDAPREFIX)/lib64/stubs/libcuda.so $(CUDAPREFIX)/lib64/libnvrtc.so $(CUDAPREFIX)/lib64/libnvToolsExt.so $(CUDAPREFIX)/lib64/libcudart.so $(TORCHPREFIX)/lib/libc10_cuda.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cpu.so -Wl,--as-needed -lpthread -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cuda.so -Wl,--as-needed $(TORCHPREFIX)/lib/libc10_cuda.so $(TORCHPREFIX)/lib/libc10.so $(CUDAPREFIX)/lib64/libcufft.so $(CUDAPREFIX)/lib64/libcurand.so -lcublas /usr/lib/x86_64-linux-gnu/libcudnn.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch.so -Wl,--as-needed $(CUDAPREFIX)/lib64/libnvToolsExt.so $(CUDAPREFIX)/lib64/libcudart.so
 
 TARGET_LIB = txt2batch.so
 HEADER_LIB = txt2batch.h
@@ -22,7 +25,7 @@ all: default
 default: $(TARGET_LIB)
 
 $(TARGET_LIB): $(SOURCE_LIB) $(HEADER_LIB)
-	$(CXX) $(CXXFLAGS) -shared $< -o $@ $(TORCHFLAGS)
+	$(CXX) $(CXXFLAGS) $(SHARED) $< $(CXX_INCLUDES) -o $@ $(TORCHFLAGS)
 
 clean:
 	$(RM) $(TARGET_LIB)

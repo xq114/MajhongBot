@@ -1,26 +1,26 @@
 #include <cstdio>
 #include <string>
 #include <torch/script.h>
+#include <vector>
 
 #include "txt2batch.h"
 // #include "statemachine.h"
 
-
 Loader::Loader(int64_t mode) : i{0}, len{0} {
     ftable = fopen(files[mode], "r");
-    while(fgets(buff, 50, ftable)!=NULL)
+    while (fgets(buff, 50, ftable) != NULL)
         ++len;
     fseek(ftable, 0, SEEK_SET);
     fgets(buff, 50, ftable);
 }
 
-Loader::~Loader() {
-    fclose(ftable);
+Loader::~Loader() { fclose(ftable); }
+
+c10::intrusive_ptr<Loader> Loader::clone() const {
+    return c10::make_intrusive<Loader>(mode);
 }
 
-int64_t Loader::length() {
-    return len;
-}
+int64_t Loader::length() { return len; }
 
 std::vector<torch::Tensor> Loader::next() {
     current = fopen(buff, "r");
@@ -34,6 +34,6 @@ std::vector<torch::Tensor> Loader::next() {
 }
 
 static auto testLoader = torch::class_<Loader>("mahjong", "Loader")
-    .def(torch::init<int64_t>())
-    .def("length", &Loader::length)
-    .def("next", &Loader::next);
+                             .def(torch::init<int64_t>())
+                             .def("length", &Loader::length)
+                             .def("next", &Loader::next);
