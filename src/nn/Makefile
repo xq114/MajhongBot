@@ -9,9 +9,15 @@ SHARED = -fPIC -shared
 RM = rm
 
 TORCHPREFIX = /usr/local/src/libtorch
-CUDAPREFIX = /usr/local/cuda
-CXX_INCLUDES = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include -isystem $(CUDAPREFIX)/include
-TORCHFLAGS = -Wl,-rpath,$(TORCHPREFIX)/lib:$(CUDAPREFIX)/lib64/stubs:$(CUDAPREFIX)/lib64 $(TORCHPREFIX)/lib/libtorch.so $(TORCHPREFIX)/lib/libc10.so $(CUDAPREFIX)/lib64/stubs/libcuda.so $(CUDAPREFIX)/lib64/libnvrtc.so $(CUDAPREFIX)/lib64/libnvToolsExt.so $(CUDAPREFIX)/lib64/libcudart.so $(TORCHPREFIX)/lib/libc10_cuda.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cpu.so -Wl,--as-needed -lpthread -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cuda.so -Wl,--as-needed $(TORCHPREFIX)/lib/libc10_cuda.so $(TORCHPREFIX)/lib/libc10.so $(CUDAPREFIX)/lib64/libcufft.so $(CUDAPREFIX)/lib64/libcurand.so -lcublas /usr/lib/x86_64-linux-gnu/libcudnn.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch.so -Wl,--as-needed $(CUDAPREFIX)/lib64/libnvToolsExt.so $(CUDAPREFIX)/lib64/libcudart.so
+TORCHINCLUDES = -isystem $(TORCHPREFIX)/include -isystem $(TORCHPREFIX)/include/torch/csrc/api/include
+ERR = $(shell which nvcc > /dev/null;echo $$?)
+ifeq "$(ERR)" "0"
+	CUDAPREFIX = /usr/local/cuda
+	CUDAINCLUDES = -isystem $(CUDAPREFIX)/include
+	TORCHLIBS = -Wl,-rpath,$(TORCHPREFIX)/lib:$(CUDAPREFIX)/lib64/stubs:$(CUDAPREFIX)/lib64 $(TORCHPREFIX)/lib/libtorch.so $(TORCHPREFIX)/lib/libc10.so $(CUDAPREFIX)/lib64/stubs/libcuda.so $(CUDAPREFIX)/lib64/libnvrtc.so $(CUDAPREFIX)/lib64/libnvToolsExt.so $(CUDAPREFIX)/lib64/libcudart.so $(TORCHPREFIX)/lib/libc10_cuda.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cpu.so -Wl,--as-needed -lpthread -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cuda.so -Wl,--as-needed $(TORCHPREFIX)/lib/libc10_cuda.so $(TORCHPREFIX)/lib/libc10.so $(CUDAPREFIX)/lib64/libcufft.so $(CUDAPREFIX)/lib64/libcurand.so -lcublas /usr/lib/x86_64-linux-gnu/libcudnn.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch.so -Wl,--as-needed $(CUDAPREFIX)/lib64/libnvToolsExt.so $(CUDAPREFIX)/lib64/libcudart.so
+else
+	TORCHLIBS = -Wl,-rpath,$(TORCHPREFIX)/lib $(TORCHPREFIX)/lib/libtorch.so $(TORCHPREFIX)/lib/libc10.so -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch_cpu.so -Wl,--as-needed -lpthread -Wl,--no-as-needed,$(TORCHPREFIX)/lib/libtorch.so -Wl,--as-needed $(TORCHPREFIX)/lib/libc10.so
+endif
 
 TARGET_LIB = txt2batch.so
 HEADER_LIB = txt2batch.h
@@ -25,7 +31,7 @@ all: default
 default: $(TARGET_LIB)
 
 $(TARGET_LIB): $(SOURCE_LIB) $(HEADER_LIB)
-	$(CXX) $(CXXFLAGS) $(SHARED) $< $(CXX_INCLUDES) -o $@ $(TORCHFLAGS)
+	$(CXX) $(CXXFLAGS) $(SHARED) $< $(TORCHINCLUDES) $(CUDAINCLUDES) -o $@ $(TORCHLIBS)
 
 clean:
 	$(RM) $(TARGET_LIB)

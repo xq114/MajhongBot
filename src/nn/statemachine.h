@@ -45,7 +45,7 @@ struct State {
     void _flush_cache();
 
     /**
-     * @brief 将cuurent的状态清空
+     * @brief 将current的状态清空
      */
     void _reset_current();
 
