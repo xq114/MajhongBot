@@ -185,6 +185,38 @@ void State::mo_s(tile_n tile_num, bool on_gang) {
     }
 }
 
+/**
+ * 需要考虑的情况：
+ * 1. 别人上家打一张牌，别人吃这张牌
+ * 2. 自己上家打一张牌，吃这张牌
+ */
 void State::chi_s(int feng, tile_n center, tile_n tile_num) {
+
+}
+
+/**
+ * 需要考虑的情况：
+ * 1. 别人打一张牌，自己碰这张牌
+ * 2. 别人打一张牌，别人碰这张牌
+ */
+void State::peng_s(int feng, int provider_feng, tile_n tile_num) {
+
+}
+
+/**
+ * 需要考虑的情况：
+ * 1. 别人打一张牌，自己杠这张牌
+ * 2. 别人打一张牌，别人杠这张牌
+ */
+void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
+
+}
+
+/**
+ * 需要考虑的情况：
+ * 1. 别人补杠
+ * 2. 自己补杠
+ */
+void State::bugang_s(int feng, tile_n tile_num) {
 
 }

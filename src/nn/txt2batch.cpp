@@ -22,13 +22,59 @@ c10::intrusive_ptr<Loader> Loader::clone() const {
 
 int64_t Loader::length() { return len; }
 
+constexpr char dapai[] = "打牌";
+
+
 std::vector<torch::Tensor> Loader::next() {
     current = fopen(buff, "r");
-
-    torch::Tensor inputs = torch::eye(3, 3);
-    torch::Tensor labels = torch::ones(3);
-    // TODO: finish the parse
+    long lSize;
+    char * buffer;
+    size_t result;
+    
+    /* 若要一个byte不漏地读入整个文件，只能采用二进制方式打开 */ 
+    current = fopen ("test.txt", "rb" );
+    if (current==NULL)
+    {
+        fputs ("File error",stderr);
+        exit (1);
+    }
+ 
+    /* 获取文件大小 */
+    fseek (current , 0 , SEEK_END);
+    lSize = ftell (current);
+    rewind (current);
+ 
+    /* 分配内存存储整个文件 */ 
+    buffer = (char*) malloc (sizeof(char)*lSize);
+    if (buffer == NULL)
+    {
+        fputs ("Memory error",stderr); 
+        exit (2);
+    }
+ 
+    /* 将文件拷贝到buffer中 */
+    result = fread (buffer,1,lSize,current);
+    if (result != lSize)
+    {
+        fputs ("Reading error",stderr);
+        exit (3);
+    }
     fclose(current);
+
+    /* 统计打牌操作出现次数 */
+    int L = 0, i=0;
+    char *p, *tmp;
+    p = strtok(buffer, "\t");
+    while(p!=NULL) {
+        if(strcmp(p , dapai)==0)
+            ++L;
+        p =strtok(NULL, "\t");
+    }
+
+    torch::Tensor inputs=torch::empty({L, 150, 4, 34});
+    torch::Tensor labels=torch::empty({L});
+
+    // TODO: finish the parse
     fgets(buff, 50, ftable);
     return std::vector<torch::Tensor>{inputs.clone(), labels.clone()};
 }
