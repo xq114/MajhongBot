@@ -27,7 +27,7 @@ inline int count(const unit &u, tile_n i) {
 }
 inline void set_row(unit &u, int i) {
     for (int j = 0; j < 34; ++j)
-            u[i][j] = true;
+        u[i][j] = true;
 }
 inline int set(unit &u, tile_n i) {
 #ifndef _BOTZONE_ONLINE
@@ -55,7 +55,12 @@ inline int reset(unit &u, tile_n i) {
     return j;
 }
 inline bool first(unit &u) { return u[0][0]; }
-inline int get(unit &u) { int i=0;while(!u[i][0])++i;return i; }
+inline int get(unit &u) {
+    int i = 0;
+    while (!u[i][0])
+        ++i;
+    return i;
+}
 
 void State::_flush_cache() {
     int nplace, ntile;
@@ -66,18 +71,18 @@ void State::_flush_cache() {
     cache_feng = -1;
 }
 
-void State::_reset_current() {
-    memset(current_feng, 0, 3*sizeof(unit));
-}
+void State::_reset_current() { memset(current_feng, 0, 3 * sizeof(unit)); }
 
 void State::init_feng(int men, int quan) {
     set_row(feng_men, men);
-    set_row(feng_relquan, (quan-men+4)%4);
+    set_row(feng_relquan, (quan - men + 4) % 4);
     cache_feng = -1;
+    cache_mo = false;
 }
 
-void State::init_hand(tile_n *tiles) {
-    for (int i = 0; i < 13; ++i) {
+void State::init_hand(tile_n *tiles, bool zhuang) {
+    int lim = zhuang ? 14 : 13;
+    for (int i = 0; i < lim; ++i) {
         tile_n tn = tiles[i];
         set(hand_tiles, tn);
         set(tile_count, tn);
@@ -85,8 +90,8 @@ void State::init_hand(tile_n *tiles) {
     cache_tile = -1;
 }
 
-torch::Tensor State::totensor() const {
-    torch::Tensor ret = torch::zeros({150, 4, 34});
+void State::totensor(torch::Tensor &ret) const {
+    // torch::Tensor ret = torch::zeros({150, 4, 34});
     auto copy = [&ret](int p, const unit &u) {
         for (int i = 0; i < 4; ++i)
             for (int j = 0; j < 34; ++j) {
@@ -112,7 +117,8 @@ torch::Tensor State::totensor() const {
     }
     // Look-ahead information
     copy(130, tile_count);
-    return ret.clone();
+    // return ret.clone();
+    return;
 }
 
 /**
@@ -130,15 +136,16 @@ void State::discard_s(int feng, tile_n tile_num) {
         // 1
         cache_feng = feng;
         cache_tile = tile_num;
-        ntile = count(tile_count, tile_num) - 1;
+        ntile = set(tile_count, tile_num);
         set_row(current_feng, feng);
         set(current_da[ntile], tile_num);
         return;
     }
-    bool self = first(feng_men[cache_feng]);
+    bool self = first(feng_men[feng]);
     if (self) {
-        if (cache_feng == feng) {
+        if (cache_mo) {
             // 5
+            cache_feng = feng;
             set(hand_tiles, cache_tile);
             cache_tile = tile_num;
         } else {
@@ -146,7 +153,7 @@ void State::discard_s(int feng, tile_n tile_num) {
             cache_feng = feng;
             cache_tile = tile_num;
         }
-        reset(hand_tiles, tile_num); 
+        reset(hand_tiles, tile_num);
     } else {
         _reset_current();
         ntile = set(tile_count, tile_num);
@@ -166,6 +173,7 @@ void State::discard_s(int feng, tile_n tile_num) {
         set_row(current_feng, feng);
         set(current_da[ntile], tile_num);
     }
+    cache_mo = false;
 }
 
 /**
@@ -175,14 +183,24 @@ void State::discard_s(int feng, tile_n tile_num) {
  * 3. 补杠/暗杠，自己摸一张牌
  */
 void State::mo_s(tile_n tile_num, bool on_gang) {
+    _reset_current();
+    set(current_mo[0], tile_num);
+    if (on_gang) {
+        // 3
+        int feng = get(feng_men);
+        set_row(current_feng, feng);
+    }
+    if (cache_feng != -1) {
+        // 2
+        _flush_cache();
+    }
     if (cache_tile == -1) {
         // 1
-        cache_tile = tile_num;
-        cache_feng = get(feng_men);
-        set_row(current_feng, cache_feng);
-        set(current_mo[0], tile_num);
-        set(tile_count, tile_num);
     }
+    set(tile_count, tile_num);
+    cache_feng = -1;
+    cache_tile = tile_num;
+    cache_mo = true;
 }
 
 /**
@@ -191,25 +209,84 @@ void State::mo_s(tile_n tile_num, bool on_gang) {
  * 2. 自己上家打一张牌，吃这张牌
  */
 void State::chi_s(int feng, tile_n center, tile_n tile_num) {
-
+    bool self = first(feng_men[feng]);
+    if (self) {
+        // 2
+        for (int i = -1; i <= 1; ++i) {
+            if (center + i != tile_num) {
+                reset(hand_tiles, center + i);
+            }
+        }
+    } else {
+        // 1
+    }
+    set(ming[feng], center - 1);
+    set(ming[feng], center);
+    set(ming[feng], center + 1);
+    set(ming_info[feng], center);
+    cache_feng = -1;
+    cache_mo = false;
 }
 
 /**
  * 需要考虑的情况：
- * 1. 别人打一张牌，自己碰这张牌
- * 2. 别人打一张牌，别人碰这张牌
+ * 1. 别人打一张牌，别人碰这张牌
+ * 2. 别人打一张牌，自己碰这张牌
  */
 void State::peng_s(int feng, int provider_feng, tile_n tile_num) {
-
+    bool self = first(feng_men[feng]);
+    if (self) {
+        // 2
+        reset(hand_tiles, tile_num);
+        reset(hand_tiles, tile_num);
+    } else {
+        // 1
+    }
+    set(ming[feng], tile_num);
+    set(ming[feng], tile_num);
+    set(ming[feng], tile_num);
+    set(ming_info[feng][(provider_feng + 4 - feng) % 4], tile_num);
+    cache_feng = -1;
+    cache_mo = false;
 }
 
 /**
  * 需要考虑的情况：
- * 1. 别人打一张牌，自己杠这张牌
- * 2. 别人打一张牌，别人杠这张牌
+ * 1. 别人打一张牌，别人杠这张牌
+ * 2. 别人打一张牌，自己杠这张牌
+ * 3. 自己摸一张牌，开暗杠
+ * 4. 自己碰/杠/吃，开暗杠
  */
 void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
-
+    bool self = first(feng_men[feng]);
+    if (self) {
+        if (cache_mo) {
+            // 3
+            reset(hand_tiles, tile_num);
+            reset(hand_tiles, tile_num);
+            reset(hand_tiles, tile_num);
+        } else if (cache_feng == -1) {
+            // 4
+            reset(hand_tiles, tile_num);
+            reset(hand_tiles, tile_num);
+            reset(hand_tiles, tile_num);
+        } else {
+            // 2
+            reset(hand_tiles, tile_num);
+            reset(hand_tiles, tile_num);
+            reset(hand_tiles, tile_num);
+        }
+    } else {
+        // 1
+    }
+    set(ming[feng], tile_num);
+    set(ming[feng], tile_num);
+    set(ming[feng], tile_num);
+    set(ming[feng], tile_num);
+    set(ming_info[feng][0], tile_num);
+    set(ming_info[feng][(provider_feng + 4 - feng) % 4], tile_num);
+    cache_feng = -1;
+    cache_mo = false;
 }
 
 /**
@@ -218,5 +295,14 @@ void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
  * 2. 自己补杠
  */
 void State::bugang_s(int feng, tile_n tile_num) {
-
+    bool self = first(feng_men[feng]);
+    if (self) {
+        // 2
+    } else {
+        // 1
+    }
+    set(ming[feng], tile_num);
+    set(ming_info[feng][0], tile_num);
+    cache_feng = -1;
+    cache_mo = false;
 }

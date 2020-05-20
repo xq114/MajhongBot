@@ -36,8 +36,9 @@ struct State {
     int discard_count[4];
 
     // 缓存：上一次打出的牌与风位
-    int cache_feng; // -1表示第一次打出牌/上次牌被吃碰杠了
-    tile_n cache_tile;
+    int cache_feng;    // -1表示第一次打出牌/上次牌被吃碰杠了
+    bool cache_mo;     // 上次操作是否为摸牌
+    tile_n cache_tile; // 摸牌/打牌的缓存
 
     /**
      * @brief 将cache里的牌扔到场上
@@ -58,15 +59,16 @@ struct State {
 
     /**
      * @brief 初始化手牌
-     * @param tiles 手牌数组，大小为13
+     * @param tiles 手牌数组，大小为13/14
      */
-    void init_hand(tile_n *tiles);
+    void init_hand(tile_n *tiles, bool zhuang);
 
     /**
      * @brief 将当前状态转成Tensor
      * @retval tensor 150x4x34
      */
-    torch::Tensor totensor() const;
+    void totensor(torch::Tensor &ret) const;
+    // torch::Tensor totensor() const;
 
     /**
      * @brief 打牌 & 看别人打牌
