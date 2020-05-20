@@ -52,7 +52,30 @@ tile_n _parse_tile(char *s) {
     return 34;
 }
 
-void _parse(State *sts, char *p) {}
+void _parse(State *sts, int player, char *p) {
+    tile_n tmp;
+    if (strcmp(p, mopai) == 0) {
+        p = strtok(NULL, "\t[',]\n");
+        tmp = _parse_tile(p);
+        sts[player].mo_s(tmp, false);
+    } else if (strcmp(p, chi) == 0) {
+        p = strtok(NULL, "\t[',]\n");
+        p = strtok(NULL, "\t[',]\n");
+        tmp = _parse_tile(p);
+        p = strtok(NULL, "\t[',]\n");
+
+    } else if (strcmp(p, peng) == 0) {
+
+    } else if (strcmp(p, gang) == 0) {
+
+    } else if (strcmp(p, buhua) == 0) {
+
+    } else if (strcmp(p, bugang) == 0) {
+
+    } else if (strcmp(p, hupai) == 0) {
+        return;
+    }
+}
 
 std::vector<torch::Tensor> Loader::next() {
     long lSize;
@@ -130,12 +153,15 @@ std::vector<torch::Tensor> Loader::next() {
         player = *p - '0';
         p = strtok(NULL, "\t");
         if (strcmp(p, dapai) == 0) {
-            sts[player].totensor(inputs[i]);
+            sts[player].totensor(inputs, i);
             p = strtok(NULL, "\t[',]");
             label = _parse_tile(p);
+            labels.index_put_({i}, label);
             ++i;
+            for (int i = 0; i < 4; ++i)
+                sts[i].discard_s(player, label);
         } else {
-            _parse(sts, p);
+            _parse(sts, player, p);
         }
         p = strtok(NULL, "\t");
     }

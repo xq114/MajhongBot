@@ -64,10 +64,10 @@ struct State {
     void init_hand(tile_n *tiles, bool zhuang);
 
     /**
-     * @brief 将当前状态转成Tensor
-     * @retval tensor 150x4x34
+     * @brief 将当前状态转成Tensor, 存储在第i维
+     * @retval tensor Lx150x4x34
      */
-    void totensor(torch::Tensor &ret) const;
+    void totensor(torch::Tensor &ret, int i) const;
     // torch::Tensor totensor() const;
 
     /**

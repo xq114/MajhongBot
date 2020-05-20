@@ -90,12 +90,12 @@ void State::init_hand(tile_n *tiles, bool zhuang) {
     cache_tile = -1;
 }
 
-void State::totensor(torch::Tensor &ret) const {
+void State::totensor(torch::Tensor &ret, int ii) const {
     // torch::Tensor ret = torch::zeros({150, 4, 34});
-    auto copy = [&ret](int p, const unit &u) {
+    auto copy = [&ret, ii](int p, const unit &u) {
         for (int i = 0; i < 4; ++i)
             for (int j = 0; j < 34; ++j) {
-                ret[p][i][j] = u[i][j];
+                ret.index_put_({ii, p, i, j}, u[i][j]);
             }
         return;
     };
@@ -123,25 +123,32 @@ void State::totensor(torch::Tensor &ret) const {
 
 /**
  * 需要考虑的情况：
- * 1. 别家开局摸一张牌（无对应），打出一张牌
+ * 1. 别家开局打出一张牌
  * 2. 别家的上家打一张牌，别家摸一张牌（无对应），打出一张牌
  * 3. 别家补杠/暗杠，别家摸一张牌（无对应），打出一张牌
  * 4. 别家碰/吃/明杠，打出一张牌
  * 5. 自己摸一张牌，打出一张牌
  * 6. 自己碰/吃/明杠，打出一张牌
+ * 7. 自己开局打出一张牌
  */
 void State::discard_s(int feng, tile_n tile_num) {
     int ntile;
+    bool self = first(feng_men[feng]);
     if (cache_tile == -1) {
-        // 1
         cache_feng = feng;
         cache_tile = tile_num;
         ntile = set(tile_count, tile_num);
-        set_row(current_feng, feng);
-        set(current_da[ntile], tile_num);
+        if (self) {
+            // 7
+            reset(hand_tiles, tile_num);
+        } else {
+            // 1
+            set_row(current_feng, feng);
+            set(current_da[ntile], tile_num);
+        }
+        cache_mo = false;
         return;
     }
-    bool self = first(feng_men[feng]);
     if (self) {
         if (cache_mo) {
             // 5
@@ -178,24 +185,20 @@ void State::discard_s(int feng, tile_n tile_num) {
 
 /**
  * 需要考虑的情况：
- * 1. 开局摸一张牌
- * 2. 上家打出一张牌，自己摸一张牌
- * 3. 补杠/暗杠，自己摸一张牌
+ * 1. 上家打出一张牌，自己摸一张牌
+ * 2. 补杠/暗杠，自己摸一张牌
  */
 void State::mo_s(tile_n tile_num, bool on_gang) {
     _reset_current();
     set(current_mo[0], tile_num);
     if (on_gang) {
-        // 3
+        // 2
         int feng = get(feng_men);
         set_row(current_feng, feng);
     }
     if (cache_feng != -1) {
-        // 2
-        _flush_cache();
-    }
-    if (cache_tile == -1) {
         // 1
+        _flush_cache();
     }
     set(tile_count, tile_num);
     cache_feng = -1;
