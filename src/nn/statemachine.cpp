@@ -45,7 +45,7 @@ inline int reset(unit &u, tile_n i) {
 #endif
     if (u[3][i]) {
         reset(u[3], i);
-        return;
+        return 3;
     }
     int j = 0;
     while (u[j][i])
@@ -137,12 +137,12 @@ void State::discard_s(int feng, tile_n tile_num) {
     if (cache_tile == -1) {
         cache_feng = feng;
         cache_tile = tile_num;
-        ntile = set(tile_count, tile_num);
         if (self) {
             // 7
             reset(hand_tiles, tile_num);
         } else {
             // 1
+            ntile = set(tile_count, tile_num);
             set_row(current_feng, feng);
             set(current_da[ntile], tile_num);
         }
@@ -187,10 +187,15 @@ void State::discard_s(int feng, tile_n tile_num) {
  * 需要考虑的情况：
  * 1. 上家打出一张牌，自己摸一张牌
  * 2. 补杠/暗杠，自己摸一张牌
+ * 3. 摸牌, 补花后再摸牌
  */
 void State::mo_s(tile_n tile_num, bool on_gang) {
     _reset_current();
     set(current_mo[0], tile_num);
+    if (cache_mo) {
+        // 3
+        set(hand_tiles, cache_tile);
+    }
     if (on_gang) {
         // 2
         int feng = get(feng_men);
@@ -268,7 +273,7 @@ void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
             reset(hand_tiles, tile_num);
             reset(hand_tiles, tile_num);
             reset(hand_tiles, tile_num);
-        } else if (cache_feng == -1) {
+        } else if (provider_feng == feng) {
             // 4
             reset(hand_tiles, tile_num);
             reset(hand_tiles, tile_num);

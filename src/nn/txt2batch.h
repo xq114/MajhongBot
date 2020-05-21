@@ -7,13 +7,15 @@ constexpr char files[2][25]{"./model/train_files.txt", "./model/val_files.txt"};
 struct Loader : torch::CustomClassHolder {
     int64_t mode; // 0 for train and 1 for val
     char buff[50];
-    int64_t i;
+    int64_t ifile;
     int64_t len;
     FILE *ftable;
     FILE *current;
 
     Loader(int64_t mode);
     ~Loader();
+
+    void init();
 
     c10::intrusive_ptr<Loader> clone() const;
 
@@ -29,4 +31,6 @@ struct Loader : torch::CustomClassHolder {
      * of the dim Nx1
      */
     std::vector<torch::Tensor> next();
+
+    bool is_valid() const { return ifile < len; }
 };

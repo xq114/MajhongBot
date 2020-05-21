@@ -20,18 +20,23 @@ else
 endif
 
 TARGET_LIB = txt2batch.so
-HEADER_LIB = txt2batch.h
-SOURCE_LIB = txt2batch.cpp
+HEADER_LIB = txt2batch.h statemachine.h
+SOURCE_LIB = txt2batch.cpp statemachine.cpp
 
 .PHONY:
-	all default clean
+	all default clean debug
 
 all: default
 
 default: $(TARGET_LIB)
 
 $(TARGET_LIB): $(SOURCE_LIB) $(HEADER_LIB)
-	$(CXX) $(CXXFLAGS) $(SHARED) $< $(TORCHINCLUDES) $(CUDAINCLUDES) -o $@ $(TORCHLIBS)
+	$(CXX) $(CXXFLAGS) $(SHARED) $(SOURCE_LIB) $(TORCHINCLUDES) $(CUDAINCLUDES) -o $@ $(TORCHLIBS)
+
+debug: batchtest
+
+batchtest: $(SOURCE_LIB) $(HEADER_LIB) batchtest.cpp
+	$(CXX) $(CXXFLAGS) -g $(SOURCE_LIB) batchtest.cpp $(TORCHINCLUDES) $(CUDAINCLUDES) -o $@ $(TORCHLIBS)
 
 clean:
 	$(RM) $(TARGET_LIB)

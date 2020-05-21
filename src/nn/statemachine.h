@@ -103,7 +103,7 @@ struct State {
     /**
      * @brief 杠牌
      * @param feng 杠牌相对风位
-     * @param provider_feng 被杠牌相对风位，暗杠此值为0
+     * @param provider_feng 被杠牌相对风位，暗杠此值为feng
      * @param tile_num 被杠牌
      */
     void gang_s(int feng, int provider_feng, tile_n tile_num);
