@@ -61,4 +61,52 @@
 
 调用`discard_train.py`来训练模型。
 
-待续
+### 目录结构说明
+
+文件基本放在src/nn目录下，说明：
+
+```plain
+nn/
+|---data/            // 需要自行將数据解压到此目录下
+    |---LIU/
+    |---MO/
+    |---PLAY/
+|---model/
+    |---discard.pyt  // pytorch模型文件
+|---Makefile         // 构建文件
+|---mjdata.py        // 数据取样的脚本文件
+|---discard_train.py // 训练模型的脚本文件
+|---resnet34.py      // 模型文件
+|---statemachine.h
+|---statemachine.cpp // 状态机
+|---txt2batch.h
+|---txt2batch.cpp    // 读取文件转化成适合训练的数据形式
+|---batchtest.cpp    // 测试读取文件的功能
+|---infer.cpp        // 部署模型（未完成）
+```
+
+使用说明：
+
+需要先解压libtorch，安装带pytorch的python，以及CUDA（可选）
+
+调试动态库编译：
+
+```shell
+make
+python mjdata.py
+```
+
+调试数据转化功能：
+```shell
+make debug
+python mjdata.py sample 100
+gdb ./batchtest      // clang use lldb ./batchtest
+```
+
+训练：
+```shell
+make
+python mjdata.py sample 100
+python discard_train.py
+```
+

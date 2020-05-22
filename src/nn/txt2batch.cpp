@@ -19,7 +19,8 @@ void Loader::init() {
     fseek(ftable, 0, SEEK_SET);
     fgets(buff, 50, ftable);
     int l = strlen(buff);
-    buff[l - 1] = '\0';
+    if (buff[l - 1] == '\n')
+        buff[l - 1] = '\0';
 }
 
 Loader::~Loader() { fclose(ftable); }
@@ -121,6 +122,7 @@ void _parse(State *sts, int player, char **p) {
         for (int i = 0; i < 4; ++i)
             sts[i].bugang_s(player, tmp);
     } else if (strcmp(*p, hupai) == 0) {
+        *p = strtok(NULL, "\n");
         *p = strtok(NULL, "\n");
         *p = strtok(NULL, "\n");
     }

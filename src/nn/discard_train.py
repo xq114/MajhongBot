@@ -30,9 +30,14 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
             running_corrects = 0
             ds_sizes = {'train': 0, 'val': 0}
 
+            batch_i = 0
             dataloaders[phase].init()
             while dataloaders[phase].is_valid():
-                inputs, labels = dataloaders[phase].next()
+                batch_i += 1
+                try:
+                    inputs, labels = dataloaders[phase].next()
+                except:
+                    print("Error file index:", batch_i)
                 ds_sizes[phase] += labels.size(0)
                 inputs = inputs.to(device)
                 labels = labels.long()
