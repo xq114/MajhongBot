@@ -11,6 +11,7 @@ int main() {
     while (ld.is_valid()) {
         ++i;
         try {
+            cout << i << endl;
             ld.next();
         } catch (exception e) {
             cout << "Error file index: " << i << endl;

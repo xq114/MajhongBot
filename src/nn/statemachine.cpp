@@ -227,6 +227,9 @@ void State::chi_s(int feng, tile_n center, tile_n tile_num) {
         }
     } else {
         // 1
+        for (int i = -1; i <= 1; ++i)
+            if (center + i != tile_num)
+                set(tile_count, center + i);
     }
     set(ming[feng], center - 1);
     set(ming[feng], center);
@@ -249,6 +252,8 @@ void State::peng_s(int feng, int provider_feng, tile_n tile_num) {
         reset(hand_tiles, tile_num);
     } else {
         // 1
+        set(tile_count, tile_num);
+        set(tile_count, tile_num);
     }
     set(ming[feng], tile_num);
     set(ming[feng], tile_num);
@@ -260,7 +265,7 @@ void State::peng_s(int feng, int provider_feng, tile_n tile_num) {
 
 /**
  * 需要考虑的情况：
- * 1. 别人打一张牌，别人杠这张牌
+ * 1. 自己/别人打一张牌，别人杠这张牌
  * 2. 别人打一张牌，自己杠这张牌
  * 3. 自己摸一张牌，开暗杠
  * 4. 自己碰/杠/吃，开暗杠
@@ -270,6 +275,8 @@ void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
     if (self) {
         if (cache_mo) {
             // 3
+            set(hand_tiles, cache_tile);
+            reset(hand_tiles, tile_num);
             reset(hand_tiles, tile_num);
             reset(hand_tiles, tile_num);
             reset(hand_tiles, tile_num);
@@ -286,6 +293,11 @@ void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
         }
     } else {
         // 1
+        if (provider_feng == feng)
+            set(tile_count, tile_num);
+        set(tile_count, tile_num);
+        set(tile_count, tile_num);
+        set(tile_count, tile_num);
     }
     set(ming[feng], tile_num);
     set(ming[feng], tile_num);
@@ -300,14 +312,23 @@ void State::gang_s(int feng, int provider_feng, tile_n tile_num) {
 /**
  * 需要考虑的情况：
  * 1. 别人补杠
- * 2. 自己补杠
+ * 2. 自己摸一张牌，自己补杠
+ * 3. 自己碰/杠/吃，自己补杠
  */
 void State::bugang_s(int feng, tile_n tile_num) {
     bool self = first(feng_men[feng]);
     if (self) {
-        // 2
+        if (cache_mo) {
+            // 2
+            set(hand_tiles, cache_tile);
+            reset(hand_tiles, tile_num);
+        } else {
+            // 3
+            reset(hand_tiles, tile_num);
+        }
     } else {
         // 1
+        set(tile_count, tile_num);
     }
     set(ming[feng], tile_num);
     set(ming_info[feng][0], tile_num);
