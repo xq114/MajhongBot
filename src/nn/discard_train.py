@@ -34,13 +34,12 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
             dataloaders[phase].init()
             while dataloaders[phase].is_valid():
                 batch_i += 1
-                try:
-                    inputs, labels = dataloaders[phase].next()
-                except:
-                    print("Error file index:", batch_i)
+                # try:
+                inputs, labels = dataloaders[phase].next()
+                # except:
+                #     print("Error file index:", batch_i)
                 ds_sizes[phase] += labels.size(0)
                 inputs = inputs.to(device)
-                labels = labels.long()
                 labels = labels.to(device)
 
                 optimizer.zero_grad()
@@ -48,6 +47,7 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                     outputs = model(inputs)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
+                    print(loss)
 
                     if phase == 'train':
                         loss.backward()
@@ -56,12 +56,22 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
+                if batch_i % 20 == 0 and phase == 'train':
+                    temp_loss = running_loss / ds_sizes[phase]
+                    temp_acc = running_corrects.double() / ds_sizes[phase]
+                    print('{} batches Loss: {:.4f} Acc: {:.4f}'.format(
+                        phase, temp_loss, temp_acc))
+                    time_elapsed = time.time() - since
+                    print('Time elapsed: {:.0f}m {:.0f}s'.format(
+                        time_elapsed//60, time_elapsed % 60))
+
             if phase == 'train':
                 scheduler.step()
 
             epoch_loss = running_loss / ds_sizes[phase]
             epoch_acc = running_corrects.double() / ds_sizes[phase]
 
+            print('-' * 10)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
             time_elapsed = time.time() - since
@@ -92,7 +102,7 @@ if __name__ == '__main__':
     net = DiscardNet()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
     exp_lr_scheduler = optim.lr_scheduler.StepLR(
         optimizer, step_size=7, gamma=0.1)
 

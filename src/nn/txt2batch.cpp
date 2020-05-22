@@ -62,69 +62,69 @@ tile_n _parse_tile(char *s) {
     return 34;
 }
 
-void _parse(State *sts, int player, char **p) {
+void _parse(State *sts, int player, char **p, char **psaveptr) {
     tile_n tmp, info;
     if (strcmp(*p, mopai) == 0 || strcmp(*p, bhmopai) == 0) {
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         if (**p == 'H') {
             return;
         }
         tmp = _parse_tile(*p);
         sts[player].mo_s(tmp, false);
     } else if (strcmp(*p, ghmopai) == 0) {
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         if (**p == 'H') {
             return;
         }
         tmp = _parse_tile(*p);
         sts[player].mo_s(tmp, true);
     } else if (strcmp(*p, buhua) == 0) {
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         return;
     } else if (strcmp(*p, chi) == 0) {
-        *p = strtok(NULL, "\t[',]\n");
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         info = _parse_tile(*p);
-        *p = strtok(NULL, "\t[',]\n");
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         tmp = _parse_tile(*p);
         for (int i = 0; i < 4; ++i)
             sts[i].chi_s(player, info, tmp);
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
     } else if (strcmp(*p, peng) == 0) {
         for (int _ = 0; _ < 4; ++_)
-            *p = strtok(NULL, "\t[',]\n");
+            *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         tmp = _parse_tile(*p);
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         int provider = **p - '0';
         for (int i = 0; i < 4; ++i)
             sts[i].peng_s(player, provider, tmp);
     } else if (strcmp(*p, gang) == 0) {
         for (int _ = 0; _ < 5; ++_)
-            *p = strtok(NULL, "\t[',]\n");
+            *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         tmp = _parse_tile(*p);
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         int provider = **p - '0';
         for (int i = 0; i < 4; ++i)
             sts[i].gang_s(player, provider, tmp);
     } else if (strcmp(*p, angang) == 0) {
         for (int _ = 0; _ < 5; ++_)
-            *p = strtok(NULL, "\t[',]\n");
+            *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         tmp = _parse_tile(*p);
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         for (int i = 0; i < 4; ++i)
             sts[i].gang_s(player, player, tmp);
     } else if (strcmp(*p, bugang) == 0) {
         for (int _ = 0; _ < 5; ++_)
-            *p = strtok(NULL, "\t[',]\n");
+            *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         tmp = _parse_tile(*p);
-        *p = strtok(NULL, "\t[',]\n");
+        *p = strtok_r(NULL, "\t[',]\n", psaveptr);
         for (int i = 0; i < 4; ++i)
             sts[i].bugang_s(player, tmp);
     } else if (strcmp(*p, hupai) == 0) {
-        *p = strtok(NULL, "\n");
-        *p = strtok(NULL, "\n");
-        *p = strtok(NULL, "\n");
+        *p = strtok_r(NULL, "\n", psaveptr);
+        *p = strtok_r(NULL, "\n", psaveptr);
+        *p = strtok_r(NULL, "\n", psaveptr);
     }
     return;
 }
@@ -134,7 +134,6 @@ std::vector<torch::Tensor> Loader::next() {
         return std::vector<torch::Tensor>{};
 
     long lSize;
-    char *buffer;
     long result;
 
     /* 若要一个byte不漏地读入整个文件，只能采用二进制方式打开 */
@@ -150,11 +149,15 @@ std::vector<torch::Tensor> Loader::next() {
     rewind(current);
 
     /* 分配内存存储整个文件 */
-    buffer = new char[lSize];
-    if (buffer == NULL) {
+    if (lSize >= 5000) {
         fputs("Memory error", stderr);
         return std::vector<torch::Tensor>();
     }
+    // buffer = new char[lSize];
+    // if (buffer == NULL) {
+    //     fputs("Memory error", stderr);
+    //     return std::vector<torch::Tensor>();
+    // }
 
     /* 将文件拷贝到buffer中 */
     result = fread(buffer, 1, lSize, current);
@@ -165,35 +168,35 @@ std::vector<torch::Tensor> Loader::next() {
     fclose(current);
 
     /* 统计打牌操作出现次数 */
-    char *buffer2 = new char[lSize];
-    memcpy(buffer2, buffer, sizeof(char) * lSize);
+    // buffer2 = new char[lSize];
+    memcpy(buffer2, buffer, sizeof(char) * 5000);
     int L = 0;
-    char *p;
-    p = strtok(buffer2, "\n");
+    char *p, *saveptr;
+    p = strtok_r(buffer2, "\n", &saveptr);
     while (p != NULL) {
         if (strcmp(p, dapai) == 0)
             ++L;
-        p = strtok(NULL, "\t");
+        p = strtok_r(NULL, "\t", &saveptr);
     }
-    delete[] buffer2;
+    // delete[] buffer2;
 
     torch::Tensor inputs = torch::empty({L, 150, 4, 34});
-    torch::Tensor labels = torch::empty({L});
+    torch::Tensor labels = torch::empty({L}, {torch::dtype<long>()});
 
     /* 启动状态机 */
     State sts[4];
     memset(sts, 0, 4 * sizeof(State));
     tile_n tiles[14];
     constexpr char delim[] = "\t[',]\n";
-    p = strtok(buffer, "\n");
-    p = strtok(NULL, "\n");
+    p = strtok_r(buffer, "\n", &saveptr);
+    p = strtok_r(NULL, "\n", &saveptr);
     for (int j = 0; j < 4; ++j) {
         int lim = 0;
-        p = strtok(NULL, delim);
-        p = strtok(NULL, delim);
+        p = strtok_r(NULL, delim, &saveptr);
+        p = strtok_r(NULL, delim, &saveptr);
         while (isalpha(*p)) {
             tiles[lim++] = _parse_tile(p);
-            p = strtok(NULL, delim);
+            p = strtok_r(NULL, delim, &saveptr);
         }
         if (lim == 13)
             sts[j].init_hand(tiles, false);
@@ -206,10 +209,10 @@ std::vector<torch::Tensor> Loader::next() {
     /* 输出状态 */
     int player = -1, il = 0;
     tile_n label;
-    p = strtok(NULL, delim);
+    p = strtok_r(NULL, delim, &saveptr);
     while (p != NULL) {
         player = *p - '0';
-        p = strtok(NULL, delim);
+        p = strtok_r(NULL, delim, &saveptr);
         if (p == NULL) {
             fprintf(stderr, "Error unexpected p==NULL, i=%d\n", il);
             break;
@@ -217,19 +220,19 @@ std::vector<torch::Tensor> Loader::next() {
         if (strcmp(p, dapai) == 0) {
             assert(il < L);
             sts[player].totensor(inputs, il);
-            p = strtok(NULL, delim);
+            p = strtok_r(NULL, delim, &saveptr);
             label = _parse_tile(p);
             labels.index_put_({il}, label);
             ++il;
             for (int i = 0; i < 4; ++i)
                 sts[i].discard_s(player, label);
         } else {
-            _parse(sts, player, &p);
+            _parse(sts, player, &p, &saveptr);
         }
-        p = strtok(NULL, delim);
+        p = strtok_r(NULL, delim, &saveptr);
     }
 
-    delete[] buffer;
+    // delete[] buffer;
     if (ifile < len - 1) {
         fgets(buff, 50, ftable);
         int l = strlen(buff);
@@ -237,6 +240,7 @@ std::vector<torch::Tensor> Loader::next() {
     }
     ++ifile;
     return std::vector<torch::Tensor>{inputs.clone(), labels.clone()};
+    // return std::vector<torch::Tensor>();
 }
 
 static auto testLoader = torch::class_<Loader>("mahjong", "Loader")

@@ -11,6 +11,7 @@ struct Loader : torch::CustomClassHolder {
     int64_t len;
     FILE *ftable;
     FILE *current;
+    char buffer[5000], buffer2[5000];
 
     Loader(int64_t mode);
     ~Loader();
