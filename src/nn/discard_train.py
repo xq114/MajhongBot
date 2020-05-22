@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import time
 import copy
+import sys
 
 from resnet34 import DiscardNet
 
@@ -29,6 +30,7 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
             running_loss = 0.0
             running_corrects = 0
             ds_sizes = {'train': 0, 'val': 0}
+            intermidiate = False
 
             batch_i = 0
             dataloaders[phase].init()
@@ -47,7 +49,6 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                     outputs = model(inputs)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
-                    print(loss)
 
                     if phase == 'train':
                         loss.backward()
@@ -57,6 +58,7 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                 running_corrects += torch.sum(preds == labels.data)
 
                 if batch_i % 20 == 0 and phase == 'train':
+                    intermidiate = True
                     temp_loss = running_loss / ds_sizes[phase]
                     temp_acc = running_corrects.double() / ds_sizes[phase]
                     print('{} batches Loss: {:.4f} Acc: {:.4f}'.format(
@@ -69,16 +71,17 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                 scheduler.step()
 
             epoch_loss = running_loss / ds_sizes[phase]
-            epoch_acc = running_corrects.double() / ds_sizes[phase]
+            epoch_acc = float(running_corrects) / ds_sizes[phase]
 
-            print('-' * 10)
+            if intermidiate:
+                print('-' * 10)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
             time_elapsed = time.time() - since
             print('Time elapsed: {:.0f}m {:.0f}s'.format(
                 time_elapsed//60, time_elapsed % 60))
 
-            if phase == 'val' and epoch_acc >= best_acc:
+            if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
 
@@ -94,6 +97,9 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
 
 
 if __name__ == '__main__':
+    num_epochs = 2
+    if len(sys.argv) == 2:
+        num_epochs = int(sys.argv[1])
     torch.classes.load_library("txt2batch.so")
 
     dataloaders = {}
@@ -102,9 +108,9 @@ if __name__ == '__main__':
     net = DiscardNet()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
-    exp_lr_scheduler = optim.lr_scheduler.StepLR(
-        optimizer, step_size=7, gamma=0.1)
+    optimizer = optim.Adam(net.parameters(), lr=0.1)
+    exp_lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=64, eta_min=1e-5)
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -114,5 +120,5 @@ if __name__ == '__main__':
     net = net.to(device)
     net.load_state_dict(torch.load(PATH))
     net = train_model(net, dataloaders, criterion, optimizer,
-                      exp_lr_scheduler, device, num_epochs=2)
+                      exp_lr_scheduler, device, num_epochs=num_epochs)
     torch.save(net.state_dict(), PATH)

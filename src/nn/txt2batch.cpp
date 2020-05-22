@@ -180,8 +180,8 @@ std::vector<torch::Tensor> Loader::next() {
     }
     // delete[] buffer2;
 
-    torch::Tensor inputs = torch::empty({L, 150, 4, 34});
-    torch::Tensor labels = torch::empty({L}, {torch::dtype<long>()});
+    torch::Tensor inputs = torch::zeros({L, 150, 4, 34});
+    torch::Tensor labels = torch::zeros({L}, {torch::dtype<long>()});
 
     /* 启动状态机 */
     State sts[4];
@@ -210,11 +210,11 @@ std::vector<torch::Tensor> Loader::next() {
     int player = -1, il = 0;
     tile_n label;
     p = strtok_r(NULL, delim, &saveptr);
-    while (p != NULL) {
+    while (p != NULL && il < L) {
         player = *p - '0';
         p = strtok_r(NULL, delim, &saveptr);
         if (p == NULL) {
-            fprintf(stderr, "Error unexpected p==NULL, i=%d\n", il);
+            fprintf(stderr, "Unexpected Error p==NULL, i/L=%d/%d\n", il, L);
             break;
         }
         if (strcmp(p, dapai) == 0) {
@@ -229,7 +229,8 @@ std::vector<torch::Tensor> Loader::next() {
         } else {
             _parse(sts, player, &p, &saveptr);
         }
-        p = strtok_r(NULL, delim, &saveptr);
+        if (p != NULL)
+            p = strtok_r(NULL, delim, &saveptr);
     }
 
     // delete[] buffer;

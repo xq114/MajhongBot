@@ -89,8 +89,12 @@ nn/
 
 需要先解压libtorch，安装带pytorch的python，以及CUDA（可选）
 
-调试动态库编译：
+调试python环境：
+```shell
+python resnet34.py
+```
 
+调试动态库编译：
 ```shell
 make
 python mjdata.py

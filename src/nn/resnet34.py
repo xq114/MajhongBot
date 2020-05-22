@@ -147,8 +147,8 @@ class ResNet(nn.Module):
 
         # x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        x = self.fc(x)
         x = F.normalize(x)
+        x = self.fc(x)
 
         return x
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     _, preds = torch.max(results, 1)
     print(preds)
     # save state dict
-    torch.save(model.state_dict(), "./model/discard.pyt")
+    # torch.save(model.state_dict(), "./model/discard.pyt")
     # number of parameters in model
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel()
