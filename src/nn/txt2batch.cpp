@@ -195,7 +195,9 @@ std::vector<torch::Tensor> Loader::next() {
         p = strtok_r(NULL, delim, &saveptr);
         p = strtok_r(NULL, delim, &saveptr);
         while (isalpha(*p)) {
-            tiles[lim++] = _parse_tile(p);
+            if (_parse_tile(p) != 34)
+                tiles[lim] = _parse_tile(p);
+            ++lim;
             p = strtok_r(NULL, delim, &saveptr);
         }
         if (lim == 13)
