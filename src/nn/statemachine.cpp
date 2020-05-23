@@ -96,8 +96,10 @@ void State::init_hand(tile_n *tiles, bool zhuang) {
     int lim = zhuang ? 14 : 13;
     for (int i = 0; i < lim; ++i) {
         tile_n tn = tiles[i];
-        set_c(hand_tiles, tn);
-        set_c(tile_count, tn);
+        if (tn != -1) {
+            set_c(hand_tiles, tn);
+            set_c(tile_count, tn);
+        }
     }
     cache_tile = -1;
 }
