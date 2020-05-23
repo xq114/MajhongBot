@@ -175,6 +175,10 @@ if __name__ == '__main__':
     print(preds)
     # save state dict
     # torch.save(model.state_dict(), "./model/discard.pyt")
+    # save torch script
+    model.load_state_dict(torch.load("./model/discard.pyt"))
+    sm = torch.jit.script(model)
+    sm.save("../data/discard_model.pt")
     # number of parameters in model
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel()

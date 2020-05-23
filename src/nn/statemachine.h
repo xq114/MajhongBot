@@ -8,6 +8,17 @@ constexpr int CHANNEL_SIZE = 9 + 9 + 9 + 4 + 3; // 34
 using channel = bool[CHANNEL_SIZE];
 using unit = channel[4];
 
+#define PACK_TYPE_CHOW 1 ///< 顺子
+#define PACK_TYPE_PUNG 2 ///< 刻子
+#define PACK_TYPE_KONG 3 ///< 杠
+
+/* copy from tile.h */
+typedef uint8_t tile_t;
+typedef uint16_t pack_t;
+static inline pack_t make_pack(uint8_t offer, uint8_t type, tile_t tile) {
+    return (offer << 12 | (type << 8) | tile);
+}
+
 /* 使用前需要手动清空：`memset(s, 0, sizeof(State));` */
 struct State {
     // 手牌
@@ -39,6 +50,10 @@ struct State {
     int cache_feng;    // -1表示第一次打出牌/上次牌被吃碰杠了
     bool cache_mo;     // 上次操作是否为摸牌
     tile_n cache_tile; // 摸牌/打牌的缓存
+
+    // 明牌的详细记录
+    int pack_num;
+    pack_t packs[4];
 
     /**
      * @brief 将cache里的牌扔到场上
