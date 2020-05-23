@@ -1,8 +1,3 @@
-// 国标麻将（Chinese Standard Mahjong）样例程序
-// 随机策略
-// 作者：ybh1998
-// 游戏信息：http://www.botzone.org/games#Chinese-Standard-Mahjong
-
 #include <iostream>
 #include <sstream>
 #include <torch/script.h>
@@ -205,54 +200,59 @@ int canHu(State &st, bool zimo) {
         return 0;
 }
 
+using namespace torch::indexing;
+
 int main() {
     int turnID;
 
     Json::Value inputJSON;
     string resp;
-    char tmp[5000];
+    char tmp[100];
     istringstream sin;
     // ostringstream sout;
-    while (true) {
-        cin.getline(tmp, 5000);
-        sin.str(tmp);
-        Json::CharReaderBuilder rbuilder;
-        rbuilder["collectComments"] = false;
-        std::string errs;
-        bool ok = Json::parseFromStream(rbuilder, sin, &inputJSON, &errs);
-        if (!ok) {
-            cout << "parse error" << endl;
-            return 1;
-        }
-        turnID = inputJSON["responses"].size();
-        string req = inputJSON["requests"][turnID].asString();
+    cin.getline(tmp, 100);
+    sin.str(tmp);
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+    bool ok = Json::parseFromStream(rbuilder, sin, &inputJSON, &errs);
+    if (!ok) {
+        cout << "parse error" << endl;
+        return 1;
+    }
+    turnID = inputJSON["responses"].size();
+    string req = inputJSON["requests"][turnID].asString();
 
-        State st;
-        MahjongInit();
+    State st;
+    memset(&st, 0, sizeof(State));
+    MahjongInit();
+    int itmp, myPlayerID, quan, last_feng = -1, last_tile;
+    sin.str(req);
 
-        int itmp, myPlayerID, quan, last_feng = -1, last_tile;
-        sin.str(req);
-        sin >> itmp >> myPlayerID >> quan;
+    torch::jit::script::Module module;
+    try {
+        // Deserialize the ScriptModule from a file using
+        // torch::jit::load().
+        module = torch::jit::load("./data/discard_model.pt");
+    } catch (const c10::Error &e) {
+        std::cerr << "error loading the model\n";
+        return -1;
+    }
 
-        torch::jit::script::Module module;
-        try {
-            // Deserialize the ScriptModule from a file using
-            // torch::jit::load().
-            module = torch::jit::load("./data/discard_model.pt");
-        } catch (const c10::Error &e) {
-            std::cerr << "error loading the model\n";
-            return -1;
-        }
+    std::vector<torch::jit::IValue> inputs;
+    string stmp, stmp2;
 
-        std::vector<torch::jit::IValue> inputs;
-
-        string stmp, stmp2;
+    while (cin) {
+        sin >> itmp;
+        
         if (itmp == 0) {
             sin >> myPlayerID >> quan;
             st.init_feng(myPlayerID, quan);
             resp = "PASS";
         } else if (itmp == 1) {
             tile_n hand_tiles[13];
+            for (int i = 0; i < 4; ++i)
+                sin >> stmp;
             for (int j = 0; j < 13; j++) {
                 sin >> stmp;
                 hand_tiles[j] = al.tile_str2num(stmp);
@@ -274,8 +274,10 @@ int main() {
                 st.totensor(t, 0);
                 inputs.push_back(t);
                 torch::Tensor output = module.forward(inputs).toTensor();
-                torch::Tensor result = t.slice(3) * output;
-                auto [_, preds] = torch::max(result, 1);
+                torch::Tensor mask = t.index({0, 0, 0, Slice(None, None)});
+                mask.index_put_({tile}, 1);
+                torch::Tensor result = mask * output;
+                auto preds = get<1>(torch::max(result, 1));
                 int tile = preds.item().toInt();
                 string tile_str = al.tile_num2str(tile);
                 resp = "PLAY " + tile_str;
@@ -292,10 +294,14 @@ int main() {
                 tile = al.tile_str2num(stmp);
                 st.discard_s(itmp, tile);
                 /* 桌上有牌的决策 */
-                // resp = decisionTILE(itmp, tile);
                 last_feng = itmp;
                 last_tile = tile;
-                resp = "PASS";
+                if (myPlayerID!=itmp && canHu(st, false))
+                    resp = "HU";
+                else {
+                    // resp = decisionTILE(itmp, tile);
+                    resp = "PASS";
+                }
             } else if (stmp == "PENG") {
                 sin >> stmp;
                 tile = al.tile_str2num(stmp);
@@ -345,6 +351,10 @@ int main() {
         cout << endl;
 
         cout << ">>>BOTZONE_REQUEST_KEEP_RUNNING<<<" << endl;
+
+        cin.getline(tmp, 100);
+        sin.clear();
+        sin.str(tmp);
     }
 
     return 0;

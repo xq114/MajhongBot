@@ -1,0 +1,9 @@
+{"requests":["0 3 2"],"responses":[]}
+1 0 0 0 0 T7 B3 B3 B1 J3 T4 B9 B7 F1 W5 W1 J2 J3
+3 0 DRAW
+3 0 PLAY J3
+3 1 DRAW
+3 1 PLAY J2
+3 2 DRAW
+3 2 PLAY F4
+2 J1
