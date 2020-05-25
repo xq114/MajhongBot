@@ -24,7 +24,10 @@ def get_filenames_split(file_num, output_path="./model/", val_ratio=0.2):
 if __name__ == '__main__':
     if len(sys.argv) == 3 and sys.argv[1] == 'sample':
         print('sampling {} data files...'.format(sys.argv[2]))
-        get_filenames_split(int(sys.argv[2]))
+        nsamples = int(sys.argv[2])
+        ratio = 0.2 if nsamples < 100 else 0.1
+        print("val_ratio =", ratio)
+        get_filenames_split(nsamples, val_ratio=ratio)
     elif len(sys.argv) == 2 and sys.argv[1] == 'sample':
         print('sampling 10 data files...')
         get_filenames_split(10)

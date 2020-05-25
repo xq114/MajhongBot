@@ -51,13 +51,13 @@ constexpr char hupai[] = "和牌";
 tile_n _parse_tile(char *s) {
     if (s[0] == 'W')
         return s[1] - '1';
-    if (s[0] == 'B')
+    else if (s[0] == 'B')
         return 9 + s[1] - '1';
-    if (s[0] == 'T')
+    else if (s[0] == 'T')
         return 18 + s[1] - '1';
-    if (s[0] == 'F')
+    else if (s[0] == 'F')
         return 27 + s[1] - '1';
-    if (s[0] == 'J')
+    else if (s[0] == 'J')
         return 31 + s[1] - '1';
     return 34;
 }
@@ -122,8 +122,6 @@ void _parse(State *sts, int player, char **p, char **psaveptr) {
         for (int i = 0; i < 4; ++i)
             sts[i].bugang_s(player, tmp);
     } else if (strcmp(*p, hupai) == 0) {
-        *p = strtok_r(NULL, "\n", psaveptr);
-        *p = strtok_r(NULL, "\n", psaveptr);
         *p = strtok_r(NULL, "\n", psaveptr);
     }
     return;
@@ -197,6 +195,8 @@ std::vector<torch::Tensor> Loader::next() {
         while (isalpha(*p)) {
             if (_parse_tile(p) != 34)
                 tiles[lim] = _parse_tile(p);
+            else
+                tiles[lim] = -1;
             ++lim;
             p = strtok_r(NULL, delim, &saveptr);
         }
