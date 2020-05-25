@@ -250,7 +250,7 @@ void State::chi_s(int feng, tile_n center, tile_n tile_num) {
     set_c(ming[feng], center - 1);
     set_c(ming[feng], center);
     set_c(ming[feng], center + 1);
-    set_c(ming_info[feng][0], center);
+    set_c(ming_info[feng][0], tile_num);
     cache_feng = -1;
     cache_mo = false;
 }
