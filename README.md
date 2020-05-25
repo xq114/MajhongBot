@@ -78,20 +78,20 @@ make amal
 ```
 cd src
 cloc . --fullpath --not-match-d=./nn/data/
-      21 text files.
-      21 unique files.
+      26 text files.
+      26 unique files.
       14 files ignored.
 
-github.com/AlDanial/cloc v 1.84  T=6.17 s (2.9 files/s, 440.3 lines/s)
+github.com/AlDanial/cloc v 1.84  T=5.16 s (4.5 files/s, 714.9 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-C++                              9            147            205           1705
-Python                           3             61             34            260
+C++                             11            208            252           2084
+Python                           6            144             98            595
 make                             2             28              0             89
 C/C++ Header                     3             35             75             67
 JSON                             1              0              0             12
 -------------------------------------------------------------------------------
-SUM:                            18            271            314           2133
+SUM:                            23            415            425           2847
 -------------------------------------------------------------------------------
 ```
