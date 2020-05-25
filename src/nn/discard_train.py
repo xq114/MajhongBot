@@ -6,9 +6,8 @@ import copy
 import sys
 
 from resnet34 import DiscardNet
-
-
-PATH = "./model/discard.pyt"
+from resnet34_128 import DiscardNet_34_128
+from resnet50_64 import DiscardNet_50_64
 
 
 def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num_epochs=20):
@@ -100,15 +99,33 @@ if __name__ == '__main__':
     num_epochs = 2
     if len(sys.argv) == 2:
         num_epochs = int(sys.argv[1])
+    elif len(sys.argv) == 3:
+        num_epochs = int(sys.argv[2])
+
     torch.classes.load_library("txt2batch.so")
 
     dataloaders = {}
     dataloaders['train'] = torch.classes.mahjong.Loader(0)
     dataloaders['val'] = torch.classes.mahjong.Loader(1)
-    net = DiscardNet()
+
+    if len(sys.argv) == 3:
+        if sys.argv[1] == 'discard_34_128':
+            net = DiscardNet_34_128()
+            PATH = "./model/discard_34_128.pyt"
+        elif sys.argv[1] == 'discard_50_64':
+            net = DiscardNet_50_64()
+            PATH = "./model/discard_50_64.pyt"
+        else:
+            net = DiscardNet()
+            PATH = "./model/discard.pyt"
+    else:
+        net = DiscardNet()
+        PATH = "./model/discard.pyt"
+
+    print(PATH)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.1)
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
     exp_lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=64, eta_min=1e-5)
 

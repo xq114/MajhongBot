@@ -147,6 +147,7 @@ class ResNet(nn.Module):
 
         # x = self.avgpool(x)
         x = torch.flatten(x, 1)
+        x = F.normalize(x)
         x = self.fc(x)
 
         return x
@@ -173,7 +174,7 @@ if __name__ == '__main__':
     _, preds = torch.max(results, 1)
     print(preds)
     # save state dict
-    # torch.save(model.state_dict(), "./model/discard_34_128.pyt")
+    torch.save(model.state_dict(), "./model/discard_34_128.pyt")
     # save torch script
     # model.load_state_dict(torch.load("./model/discard_34_128.pyt"))
     # sm = torch.jit.script(model)

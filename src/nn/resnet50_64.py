@@ -174,7 +174,7 @@ if __name__ == '__main__':
     _, preds = torch.max(results, 1)
     print(preds)
     # save state dict
-    # torch.save(model.state_dict(), "./model/discard_50_64.pyt")
+    torch.save(model.state_dict(), "./model/discard_50_64.pyt")
     # save torch script
     # model.load_state_dict(torch.load("./model/discard_50_64.pyt"))
     # sm = torch.jit.script(model)

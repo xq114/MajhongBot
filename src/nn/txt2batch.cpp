@@ -123,8 +123,6 @@ void _parse(State *sts, int player, char **p, char **psaveptr) {
             sts[i].bugang_s(player, tmp);
     } else if (strcmp(*p, hupai) == 0) {
         *p = strtok_r(NULL, "\n", psaveptr);
-        *p = strtok_r(NULL, "\n", psaveptr);
-        *p = strtok_r(NULL, "\n", psaveptr);
     }
     return;
 }
