@@ -1,9 +1,11 @@
-{"requests":["0 3 2"],"responses":[]}
-1 0 0 0 0 T7 B3 B3 B1 J3 T4 B9 B7 F1 W5 W1 J2 J3
-3 0 DRAW
-3 0 PLAY J3
+{"requests":["0 0 2"],"responses":[]}
+1 0 0 0 0 T5 T6 B2 W3 B5 T8 B2 B4 T3 W5 W5 W9 F3
+2 B7
+3 0 PLAY F3
 3 1 DRAW
-3 1 PLAY J2
+3 1 PLAY W1
 3 2 DRAW
-3 2 PLAY F4
-2 J1
+3 2 PLAY B4
+3 3 DRAW
+3 3 PLAY T5
+2 J3

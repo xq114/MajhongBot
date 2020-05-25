@@ -1,6 +1,8 @@
+// This is not supported by PyTorch and is thus deprecated.
+
 #include <iostream>
 #include <sstream>
-#include <torch/script.h>
+#include <torch/torch.h>
 #include <vector>
 
 #ifdef _BOTZONE_ONLINE
@@ -113,6 +115,7 @@ struct MahjongAlgo {
 };
 
 #include "nn/statemachine.cpp"
+#include "resnet50_64.cpp"
 
 #define SIMPLEIO 0
 //由玩家自己定义，0表示JSON交互，1表示简单交互。
@@ -226,20 +229,19 @@ int main() {
     State st;
     memset(&st, 0, sizeof(State));
     MahjongInit();
-    int itmp, myPlayerID, quan, last_feng = -1, last_tile = -1;
+    int itmp, myPlayerID, quan, last_feng = -1, last_tile;
     sin.str(req);
 
-    torch::jit::script::Module module;
+    // torch::jit::script::Module module;
+    ResNet model = DiscardNet();
     try {
-        // Deserialize the ScriptModule from a file using
-        // torch::jit::load().
-        module = torch::jit::load("./data/discard_model_50_64.pt");
+        torch::load(model, "./data/discard_50_64.pyt");
+        // DONOT SUPPORTED BY PYTORCH!!!(2020/5/25)
     } catch (const c10::Error &e) {
         std::cerr << "error loading the model\n";
         return -1;
     }
 
-    std::vector<torch::jit::IValue> inputs;
     string stmp, stmp2;
 
     while (cin) {
@@ -272,9 +274,7 @@ int main() {
                 /* discard model */
                 torch::Tensor t = torch::zeros({1, 150, 4, 34});
                 st.totensor(t, 0);
-                inputs.push_back(t);
-                torch::Tensor output = module.forward(inputs).toTensor();
-                inputs.pop_back();
+                torch::Tensor output = model.forward(t);
                 torch::Tensor mask = t.index({0, 0, 0, Slice(None, None)});
                 mask.index_put_({tile}, 1);
                 torch::Tensor result = mask * output;
