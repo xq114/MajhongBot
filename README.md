@@ -1,3 +1,5 @@
+
+
 # MajhongBot
 第12届北京大学游戏对抗赛麻将AI
 
@@ -24,7 +26,7 @@ sudo unzip libtorch-shared-with-deps-1.5.0%2Bcpu.zip
 
 注意：仅使用c++两种版本都可以，如要做c++和python互相调用则必须用pre-cxx11 abi版本
 
-![Mac OS 预编译包](https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip)，解压到/usr/local/src即可（未测试）
+[Mac OS 预编译包](https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip)，解压到/usr/local/src即可（未测试）
 
 ## 注释说明
 需要进一步工作的地方使用`// TODO:xxx`注释，可以搜索代码或使用编辑器插件高亮此注释
